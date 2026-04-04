@@ -1,51 +1,61 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 
-export interface AuthResult {
-  user_id: string;
-  token_id: string;
-  plan: 'free' | 'supporter';
+export interface AuthContext {
+  tokenId: string;
+  userId: string;
+  plan: string;
 }
 
 export async function validateBearerToken(
   req: NextRequest
-): Promise<{ auth: AuthResult } | { error: NextResponse }> {
+): Promise<{ auth: AuthContext } | { error: NextResponse }> {
   const authHeader = req.headers.get('authorization');
-
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  if (!authHeader?.startsWith('Bearer ')) {
     return {
       error: NextResponse.json(
-        { error: 'Missing or invalid Authorization header. Use: Bearer YOUR_TOKEN' },
+        { error: 'Missing or invalid Authorization header. Expected: Bearer <token>' },
         { status: 401 }
       ),
     };
   }
 
-  const token = authHeader.slice(7).trim();
+  const rawToken = authHeader.split(' ')[1];
 
-  // Look up token in api_tokens, join to users for plan
-  const { data, error } = await supabase
+  // Hash the token since DB stores hashed tokens (Assuming we used SHA-256 for token_hash)
+  const crypto = require('crypto');
+  const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+
+  const { data: tokenRecord, error } = await supabase
     .from('api_tokens')
-    .select('id, user_id, users(plan)')
-    .eq('token', token)
+    .select('id, user_id, users ( plan )')
+    .eq('token_hash', tokenHash)
     .single();
 
-  if (error || !data) {
+  if (error || !tokenRecord) {
     return {
-      error: NextResponse.json(
-        { error: 'Invalid API token.' },
-        { status: 401 }
-      ),
+      error: NextResponse.json({ error: 'Invalid API key.' }, { status: 401 }),
     };
   }
 
-  const plan = (data.users as { plan: string } | null)?.plan ?? 'free';
+  // Ensure the user actually has an approved project (Business logic constraint)
+  const { data: project } = await supabase
+    .from('projects')
+    .select('status')
+    .eq('user_id', tokenRecord.user_id)
+    .single();
+
+  if (project?.status !== 'approved') {
+     return {
+       error: NextResponse.json({ error: 'Project not approved. Visit dashboard/projects' }, { status: 403 }),
+     };
+  }
 
   return {
     auth: {
-      user_id: data.user_id,
-      token_id: data.id,
-      plan: plan as 'free' | 'supporter',
+      tokenId: tokenRecord.id,
+      userId: tokenRecord.user_id,
+      plan: (tokenRecord.users as any)?.plan || 'free',
     },
   };
 }

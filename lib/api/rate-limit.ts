@@ -1,57 +1,45 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import type { AuthResult } from './auth';
-
-const RATE_LIMITS: Record<string, number> = {
-  free: 30,
-  supporter: 120,
-};
+import { AuthContext } from './auth';
 
 export async function checkRateLimit(
-  auth: AuthResult,
-  item_slug: string,
-  city_slug: string
-): Promise<{ allowed: true } | { error: NextResponse }> {
-  const limit = RATE_LIMITS[auth.plan] ?? 30;
+  auth: AuthContext,
+  itemSlug: string,
+  citySlug: string
+): Promise<{ ok: true } | { error: NextResponse }> {
+  // Free = 30 req/min, Supporter = 120 req/min
+  const limit = auth.plan === 'supporter' ? 120 : 30;
 
-  // Count requests in the last 1 minute
-  const since = new Date(Date.now() - 60 * 1000).toISOString();
+  const oneMinuteAgo = new Date(Date.now() - 60000).toISOString();
 
+  // Check usage in last minute
   const { count, error } = await supabase
     .from('usage_logs')
     .select('*', { count: 'exact', head: true })
-    .eq('token_id', auth.token_id)
-    .gte('requested_at', since);
+    .eq('token_id', auth.tokenId)
+    .gte('requested_at', oneMinuteAgo);
 
   if (error) {
-    // On rate limit check failure, allow through (fail open)
-    console.error('Rate limit check error:', error);
-  } else if ((count ?? 0) >= limit) {
+    console.error('Rate limit DB error:', error);
+    // Fail open rather than blocking users if DB struggles briefly
+    return { ok: true };
+  }
+
+  const currentUsage = count || 0;
+
+  if (currentUsage >= limit) {
     return {
       error: NextResponse.json(
-        {
+        { 
           error: 'Rate limit exceeded.',
-          limit,
-          plan: auth.plan,
-          upgrade: 'https://borsaapi.vercel.app/#pricing',
+          limit_per_minute: limit,
+          current_usage: currentUsage,
+          upgrade_url: 'https://borsaapi.vercel.app/#pricing'
         },
-        { status: 429, headers: { 'X-RateLimit-Limit': String(limit) } }
+        { status: 429 }
       ),
     };
   }
 
-  // Log this request (fire-and-forget)
-  supabase
-    .from('usage_logs')
-    .insert({ token_id: auth.token_id, item_slug, city_slug })
-    .then(() => {});
-
-  // Update last_used_at on the token
-  supabase
-    .from('api_tokens')
-    .update({ last_used_at: new Date().toISOString() })
-    .eq('id', auth.token_id)
-    .then(() => {});
-
-  return { allowed: true };
+  return { ok: true };
 }

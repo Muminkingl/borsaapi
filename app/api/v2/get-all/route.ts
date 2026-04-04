@@ -5,6 +5,8 @@ import { checkRateLimit } from '@/lib/api/rate-limit';
 import { isStale } from '@/lib/api/stale';
 
 export async function GET(req: NextRequest) {
+  const startTime = Date.now();
+
   // 1. Validate Bearer token
   const authResult = await validateBearerToken(req);
   if ('error' in authResult) return authResult.error;
@@ -79,6 +81,18 @@ export async function GET(req: NextRequest) {
       latestUpdate = r.data.created_at;
     }
   }
+
+  const responseMs = Date.now() - startTime;
+
+  // 8. Log Usage (Fire and forget)
+  supabase.from('api_tokens').update({ last_used_at: new Date().toISOString() }).eq('id', auth.tokenId).then();
+  supabase.from('usage_logs').insert({
+    token_id: auth.tokenId,
+    user_id: auth.userId,
+    item_slug: 'all',
+    city_slug: location,
+    response_ms: responseMs
+  }).then();
 
   return NextResponse.json({
     location,

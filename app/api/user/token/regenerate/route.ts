@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import crypto from 'crypto';
 
-// TODO: Replace with real session auth (Google OAuth) in Phase 2
 async function getUserId(req: NextRequest): Promise<string | null> {
   return req.headers.get('x-user-id');
 }
@@ -13,26 +12,29 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  // Generate new token
-  const newToken = crypto.randomBytes(32).toString('hex');
+  // 1. Generate new token + hash
+  const rawToken = crypto.randomBytes(32).toString('hex');
+  const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+  const tokenPrefix = rawToken.slice(0, 8);
 
-  // Delete old token(s) for this user
+  // 2. Delete old token(s)
   await supabase.from('api_tokens').delete().eq('user_id', userId);
 
-  // Insert new token
-  const { data, error } = await supabase
-    .from('api_tokens')
-    .insert({ user_id: userId, token: newToken })
-    .select('token, created_at')
-    .single();
+  // 3. Insert new hashed token
+  const { error } = await supabase.from('api_tokens').insert({
+    user_id: userId,
+    token: tokenPrefix,
+    token_hash: tokenHash,
+    token_prefix: tokenPrefix,
+  });
 
-  if (error || !data) {
+  if (error) {
     return NextResponse.json({ error: 'Failed to regenerate token.' }, { status: 500 });
   }
 
+  // 4. Return plain token ONE TIME
   return NextResponse.json({
-    token: data.token,
-    created_at: data.created_at,
-    message: 'Token regenerated. Your old token is now invalid.',
+    token: rawToken,
+    message: 'Token regenerated. Your old token is now invalid. Copy this now — it will never be shown again.',
   });
 }
