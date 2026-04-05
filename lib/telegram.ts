@@ -55,9 +55,9 @@ export async function notifyNewProject(project: {
     `🔗 URL: ${project.url}\n` +
     `📝 Use case: ${project.how_using}\n\n` +
     `📄 Description: ${project.description}\n\n` +
-    `Reply:\n` +
-    `✅ /approve_${project.id}\n` +
-    `❌ /reject_${project.id} your reason here`;
+    `Reply (Tap to copy):\n` +
+    `✅ <code>/approve_${project.id}</code>\n` +
+    `❌ <code>/reject_${project.id} your reason here</code>`;
 
   await sendTelegramMessage(ADMIN_CHAT_ID, text);
 }
@@ -81,9 +81,9 @@ export async function notifyResubmit(project: {
     `🌐 Project: ${project.name}\n` +
     `🔗 URL: ${project.url}\n` +
     `📝 Use case: ${project.how_using}\n\n` +
-    `Reply:\n` +
-    `✅ /approve_${project.id}\n` +
-    `❌ /reject_${project.id} your reason here`;
+    `Reply (Tap to copy):\n` +
+    `✅ <code>/approve_${project.id}</code>\n` +
+    `❌ <code>/reject_${project.id} your reason here</code>`;
 
   await sendTelegramMessage(ADMIN_CHAT_ID, text);
 }
