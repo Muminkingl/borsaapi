@@ -1,5 +1,5 @@
-"use client";
 import { useState, useEffect } from "react";
+import { useTranslation } from "@/hooks/useTranslation";
 
 const G = {
   gold: "#d4a843",
@@ -19,64 +19,65 @@ const G = {
   sans: "'Geist', sans-serif",
 };
 
-const PLANS = [
-  {
-    key: "dev",
-    name: "Developer",
-    tag: "Start building today",
-    price: "Free",
-    priceNote: "forever",
-    priceIQD: null,
-    rateLimit: "30 req / min",
-    popular: false,
-    features: [
-      { label: "All 5 cities", included: true },
-      { label: "All currency & commodity pairs", included: true },
-      { label: "Freshness timestamp", included: true },
-      { label: "Project listing on BazarAPI", included: true },
-      { label: "Priority support", included: false },
-      { label: "Historical time-series", included: false },
-      { label: "Webhook push updates", included: false },
-    ],
-    cta: "Get free API key",
-    ctaPrimary: false,
-  },
-  {
-    key: "supporter",
-    name: "Supporter",
-    tag: "For serious projects",
-    price: "5,000",
-    priceNote: "IQD / month",
-    priceIQD: "≈ $3.80 USD",
-    rateLimit: "120 req / min",
-    popular: true,
-    features: [
-      { label: "All 5 cities", included: true },
-      { label: "All currency & commodity pairs", included: true },
-      { label: "Freshness timestamp", included: true },
-      { label: "Project listing on BazarAPI", included: true },
-      { label: "Priority support", included: true },
-      { label: "Historical time-series", included: true },
-      { label: "Webhook push updates", included: true },
-    ],
-    cta: "Upgrade to Supporter →",
-    ctaPrimary: true,
-  },
-];
-
-const FAQS = [
-  { q: "Do I need a credit card to start?", a: "No. The Developer plan is free forever with no card required." },
-  { q: "What currency do you charge in?", a: "Iraqi Dinar (IQD). We use local payment rails — no foreign card fees." },
-  { q: "Can I switch plans anytime?", a: "Yes. Upgrade or downgrade instantly from your dashboard." },
-  { q: "Is there a rate limit on the free plan?", a: "30 requests per minute — plenty for side projects and prototyping." },
-];
-
 export function PricingSection() {
+  const { lang, t } = useTranslation();
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   // null = unknown (loading), "guest" = not logged in, "free" / "supporter" = logged in
   const [userPlan, setUserPlan] = useState<string | null>(null);
   const [loadingPayment, setLoadingPayment] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
+
+  const PLANS = [
+    {
+      key: "dev",
+      name: t.pricingSection.planDev,
+      tag: t.pricingSection.planDevTag,
+      price: t.pricingSection.planDevPrice,
+      priceNote: t.pricingSection.planDevPriceNote,
+      priceIQD: null,
+      rateLimit: t.pricingSection.planDevRate,
+      popular: false,
+      features: [
+        { label: t.pricingSection.featCities, included: true },
+        { label: t.pricingSection.featPairs, included: true },
+        { label: t.pricingSection.featTimestamp, included: true },
+        { label: t.pricingSection.featListing, included: true },
+        { label: t.pricingSection.featPriority, included: false },
+        { label: t.pricingSection.featHistory, included: false },
+        { label: t.pricingSection.featWebhooks, included: false },
+      ],
+      cta: t.pricingSection.planDevCta,
+      ctaPrimary: false,
+    },
+    {
+      key: "supporter",
+      name: t.pricingSection.planSup,
+      tag: t.pricingSection.planSupTag,
+      price: t.pricingSection.planSupPrice,
+      priceNote: t.pricingSection.planSupPriceNote,
+      priceIQD: t.pricingSection.planSupPriceUsd,
+      rateLimit: t.pricingSection.planSupRate,
+      popular: true,
+      features: [
+        { label: t.pricingSection.featCities, included: true },
+        { label: t.pricingSection.featPairs, included: true },
+        { label: t.pricingSection.featTimestamp, included: true },
+        { label: t.pricingSection.featListing, included: true },
+        { label: t.pricingSection.featPriority, included: true },
+        { label: t.pricingSection.featHistory, included: true },
+        { label: t.pricingSection.featWebhooks, included: true },
+      ],
+      cta: t.pricingSection.planSupCta,
+      ctaPrimary: true,
+    },
+  ];
+
+  const FAQS = [
+    { q: t.pricingSection.faq1q, a: t.pricingSection.faq1a },
+    { q: t.pricingSection.faq2q, a: t.pricingSection.faq2a },
+    { q: t.pricingSection.faq3q, a: t.pricingSection.faq3a },
+    { q: t.pricingSection.faq4q, a: t.pricingSection.faq4a },
+  ];
 
   // Fetch the current user's plan on mount
   useEffect(() => {
@@ -117,14 +118,14 @@ export function PricingSection() {
       const data = await res.json();
 
       if (!res.ok || !data.paymentUrl) {
-        throw new Error(data.error || "Failed to create payment link. Please try again.");
+        throw new Error(data.error || t.pricingSection.errCreateLink);
       }
 
       // Redirect to Wayl payment page
       window.location.href = data.paymentUrl;
 
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Something went wrong";
+      const message = err instanceof Error ? err.message : t.pricingSection.errDefault;
       setPaymentError(message);
     } finally {
       setLoadingPayment(false);
@@ -144,16 +145,16 @@ export function PricingSection() {
         <p style={{
           fontFamily: G.mono, fontSize: "10.5px", letterSpacing: "0.18em",
           color: G.gold, textTransform: "uppercase", marginBottom: "16px",
-        }}>Pricing</p>
+        }}>{t.pricingSection.pricingTitle}</p>
         <h2 style={{
           fontFamily: G.serif, fontSize: "clamp(34px,5vw,60px)", fontWeight: 400,
           color: G.fg, lineHeight: 1.05, letterSpacing: "-0.5px", margin: "0 0 18px",
         }}>
-          Simple pricing.<br />
-          <em style={{ fontStyle: "italic", color: G.gold }}>No surprises.</em>
+          {t.pricingSection.headlinePart1}<br />
+          <em style={{ fontStyle: "italic", color: G.gold }}>{t.pricingSection.headlinePart2}</em>
         </h2>
         <p style={{ color: G.fg2, fontSize: "15px", fontFamily: G.sans, margin: 0, lineHeight: 1.7 }}>
-          Start free. Pay only when your project actually needs more.
+          {t.pricingSection.description}
         </p>
       </div>
 
@@ -182,21 +183,21 @@ export function PricingSection() {
               {/* Current plan badge */}
               {isCurrentPlan && (
                 <div style={{
-                  position: "absolute", top: "-13px", left: "28px",
+                  position: "absolute", top: "-13px", [lang === 'ku' ? 'right' : 'left']: "28px",
                   background: G.green, color: "#0d0c09",
                   fontFamily: G.mono, fontSize: "9.5px", fontWeight: 700,
                   padding: "4px 12px", borderRadius: "100px", letterSpacing: "0.1em",
-                }}>✓ CURRENT PLAN</div>
+                }}>{t.pricingSection.badgeCurrent}</div>
               )}
 
               {/* Popular badge */}
               {plan.popular && !isCurrentPlan && (
                 <div style={{
-                  position: "absolute", top: "-13px", left: "28px",
+                  position: "absolute", top: "-13px", [lang === 'ku' ? 'right' : 'left']: "28px",
                   background: G.gold, color: "#0d0c09",
                   fontFamily: G.mono, fontSize: "9.5px", fontWeight: 700,
                   padding: "4px 12px", borderRadius: "100px", letterSpacing: "0.1em",
-                }}>MOST POPULAR</div>
+                }}>{t.pricingSection.badgePopular}</div>
               )}
 
               {/* Plan name + rate limit */}
@@ -208,7 +209,7 @@ export function PricingSection() {
                   <span style={{
                     fontFamily: G.mono, fontSize: "9.5px", color: G.fg3,
                     background: G.goldDim, border: `1px solid ${G.goldBorder}`,
-                    borderRadius: "100px", padding: "3px 10px",
+                    borderRadius: "100px", padding: "3px 10px", direction: "ltr"
                   }}>{plan.rateLimit}</span>
                 </div>
                 <p style={{ fontFamily: G.sans, fontSize: "13px", color: G.fg3, margin: 0 }}>{plan.tag}</p>
@@ -216,12 +217,12 @@ export function PricingSection() {
 
               {/* Price */}
               <div style={{ marginBottom: "28px", paddingBottom: "24px", borderBottom: `1px solid ${G.goldBorder}` }}>
-                <div style={{ display: "flex", alignItems: "baseline", gap: "6px", marginBottom: "4px" }}>
+                <div style={{ display: "flex", alignItems: "baseline", gap: "6px", marginBottom: "4px", direction: "ltr", justifyContent: lang === 'ku' ? "flex-end" : "flex-start" }}>
                   <span style={{ fontFamily: G.serif, fontSize: "44px", color: G.fg, lineHeight: 1 }}>{plan.price}</span>
-                  <span style={{ fontFamily: G.mono, fontSize: "12px", color: G.fg3 }}>{plan.priceNote}</span>
+                  <span style={{ fontFamily: G.mono, fontSize: "12px", color: G.fg3, direction: lang === 'ku' ? "rtl" : "ltr" }}>{plan.priceNote}</span>
                 </div>
                 {plan.priceIQD && (
-                  <p style={{ fontFamily: G.mono, fontSize: "11px", color: G.fg3, margin: 0 }}>{plan.priceIQD}</p>
+                  <p style={{ fontFamily: G.mono, fontSize: "11px", color: G.fg3, margin: 0, direction: "ltr", textAlign: lang === 'ku' ? "right" : "left" }}>{plan.priceIQD}</p>
                 )}
               </div>
 
@@ -265,7 +266,7 @@ export function PricingSection() {
                   onMouseEnter={e => { if (!isCurrentPlan && !loadingPayment) (e.currentTarget as HTMLElement).style.opacity = "0.82"; }}
                   onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = "1"; }}
                 >
-                  {isCurrentPlan ? "✓ Current Plan" : loadingPayment ? "Creating link…" : plan.cta}
+                  {isCurrentPlan ? t.pricingSection.badgeCurrent : loadingPayment ? t.pricingSection.creatingLink : plan.cta}
                 </button>
               ) : (
                 <a href="/register" style={{
@@ -304,18 +305,18 @@ export function PricingSection() {
         maxWidth: "780px", margin: "0 auto 80px",
       }}>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", borderBottom: `1px solid ${G.goldBorder}` }}>
-          <div style={{ padding: "14px 20px", fontFamily: G.mono, fontSize: "10px", color: G.fg3, letterSpacing: "0.1em", textTransform: "uppercase" }}>Feature</div>
+          <div style={{ padding: "14px 20px", fontFamily: G.mono, fontSize: "10px", color: G.fg3, letterSpacing: "0.1em", textTransform: "uppercase" }}>{t.pricingSection.compFeature}</div>
           {PLANS.map(p => (
-            <div key={p.key} style={{ padding: "14px 20px", fontFamily: G.mono, fontSize: "10.5px", color: G.gold, borderLeft: `1px solid ${G.goldBorder}`, letterSpacing: "0.06em" }}>{p.name}</div>
+            <div key={p.key} style={{ padding: "14px 20px", fontFamily: G.mono, fontSize: "10.5px", color: G.gold, borderInlineStart: `1px solid ${G.goldBorder}`, letterSpacing: "0.06em" }}>{p.name}</div>
           ))}
         </div>
         {[
-          { label: "Rate limit", vals: ["30 / min", "120 / min"] },
-          { label: "Cities", vals: ["5", "5"] },
-          { label: "History", vals: ["—", "Full"] },
-          { label: "Webhooks", vals: ["—", "✓"] },
-          { label: "Support", vals: ["Community", "Priority"] },
-          { label: "Price", vals: ["Free", "5,000 IQD/mo"] },
+          { label: t.pricingSection.compRateLimit, vals: [t.pricingSection.compRateFree, t.pricingSection.compRateSup] },
+          { label: t.pricingSection.compCities, vals: ["5", "5"] },
+          { label: t.pricingSection.compHistory, vals: ["—", t.pricingSection.compHistorySup] },
+          { label: t.pricingSection.compWebhooks, vals: ["—", "✓"] },
+          { label: t.pricingSection.compSupport, vals: [t.pricingSection.compSupportFree, t.pricingSection.compSupportSup] },
+          { label: t.pricingSection.compPrice, vals: [t.pricingSection.planDevPrice, t.pricingSection.compPriceSup] },
         ].map((row, i) => (
           <div key={i} style={{
             display: "grid", gridTemplateColumns: "1fr 1fr 1fr",
@@ -327,7 +328,7 @@ export function PricingSection() {
               <div key={j} style={{
                 padding: "12px 20px", fontFamily: G.mono, fontSize: "12.5px",
                 color: v === "—" ? "rgba(242,237,228,0.18)" : j === 1 ? G.gold : G.fg2,
-                borderLeft: `1px solid rgba(212,168,67,0.08)`,
+                borderInlineStart: `1px solid rgba(212,168,67,0.08)`, direction: "ltr", textAlign: lang === 'ku' ? "right" : "left"
               }}>{v}</div>
             ))}
           </div>
@@ -339,7 +340,7 @@ export function PricingSection() {
         <p style={{
           fontFamily: G.mono, fontSize: "10px", color: G.fg3,
           letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "20px", textAlign: "center",
-        }}>Common questions</p>
+        }}>{t.pricingSection.faqTitle}</p>
         <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
           {FAQS.map((faq, i) => (
             <div key={i} style={{

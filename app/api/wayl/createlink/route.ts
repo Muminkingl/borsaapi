@@ -112,7 +112,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Build URLs
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || 'https://borsaapi.vercel.app';
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || 'https://borsapi.vercel.app';
     const webhookUrl = `${appUrl}/api/wayl/webhook`;
     const redirectUrl = `${appUrl}/dashboard?payment=processing&ref=${referenceId}`;
 

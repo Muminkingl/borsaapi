@@ -28,7 +28,7 @@ export const RevenueChart = memo(() => {
           </p>
         </div>
         <Button variant="outline" size="sm">
-          <Calendar className="mr-2 h-4 w-4" />
+          <Calendar className="me-2 h-4 w-4" />
           Last 6 months
         </Button>
       </div>
@@ -48,7 +48,7 @@ export const RevenueChart = memo(() => {
                 className={`w-full ${item.color} relative min-h-[20px] cursor-pointer rounded-t-lg transition-opacity hover:opacity-80`}
               >
                 {/* Tooltip */}
-                <div className="border-border bg-popover absolute -top-16 left-1/2 z-10 -translate-x-1/2 transform rounded-lg border px-3 py-2 text-sm whitespace-nowrap opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
+                <div className="border-border bg-popover absolute -top-16 start-1/2 z-10 -translate-x-1/2 transform rounded-lg border px-3 py-2 text-sm whitespace-nowrap opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
                   <div className="font-medium">
                     ${item.value.toLocaleString()}
                   </div>

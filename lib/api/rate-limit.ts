@@ -34,7 +34,7 @@ export async function checkRateLimit(
           error: 'Rate limit exceeded.',
           limit_per_minute: limit,
           current_usage: currentUsage,
-          upgrade_url: 'https://borsaapi.vercel.app/#pricing'
+          upgrade_url: 'https://borsapi.vercel.app/#pricing'
         },
         { status: 429 }
       ),

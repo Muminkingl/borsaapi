@@ -13,6 +13,7 @@ import {
   BreadcrumbList,
 } from '@/components/ui/breadcrumb';
 import { Bell, Search, RefreshCw } from 'lucide-react';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface DashboardHeaderProps {
   searchQuery: string;
@@ -27,11 +28,13 @@ export function DashboardHeader({
   onRefresh,
   isRefreshing,
 }: DashboardHeaderProps) {
+  const { t } = useTranslation();
+
   return (
     <header className="bg-background/95 sticky top-0 z-50 flex h-16 w-full shrink-0 items-center gap-2 border-b backdrop-blur transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
       <div className="flex items-center gap-2 px-4">
         <SidebarTrigger className="-ml-1" />
-        <Separator orientation="vertical" className="mr-2 h-4" />
+        <Separator orientation="vertical" className="me-2 h-4" />
         <Breadcrumb>
           <BreadcrumbList>
             <BreadcrumbItem className="hidden md:block">
@@ -41,7 +44,7 @@ export function DashboardHeader({
         </Breadcrumb>
       </div>
 
-      <div className="ml-auto flex items-center gap-2 px-4">
+      <div className="ms-auto flex items-center gap-2 px-4">
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -49,12 +52,12 @@ export function DashboardHeader({
         >
           {/* Search */}
           <div className="relative hidden md:block">
-            <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+            <Search className="text-muted-foreground absolute top-1/2 start-3 h-4 w-4 -translate-y-1/2" />
             <Input
-              placeholder="Search..."
+              placeholder={t.dashboard.searchPlaceholder}
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
-              className="w-56 pl-10"
+              className="w-56 ps-10"
             />
           </div>
 

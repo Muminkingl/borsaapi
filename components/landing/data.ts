@@ -11,7 +11,7 @@ export const cities = ["Erbil", "Baghdad", "Sulaymaniyah", "Duhok", "Kirkuk"];
 
 export const codeSnippets: Record<string, string> = {
   JavaScript: `const res = await fetch(
-  "https://borsaapi.vercel.app/api/v2/get-price
+  "https://borsapi.vercel.app/api/v2/get-price
   ?item=usd&location=erbil",
   {
     headers: {
@@ -23,7 +23,7 @@ const { value, created_at } = await res.json();`,
   Python: `import requests
 
 res = requests.get(
-  "https://borsaapi.vercel.app/api/v2/get-price",
+  "https://borsapi.vercel.app/api/v2/get-price",
   params={"item": "usd", "location": "erbil"},
   headers={"Authorization": "Bearer YOUR_TOKEN"}
 )
@@ -31,7 +31,7 @@ data = res.json()
 print(data["value"], data["created_at"])`,
   Dart: `final res = await http.get(
   Uri.parse(
-    'https://borsaapi.vercel.app/api/v2/get-price'
+    'https://borsapi.vercel.app/api/v2/get-price'
     '?item=usd&location=erbil'
   ),
   headers: {

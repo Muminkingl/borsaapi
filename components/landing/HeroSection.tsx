@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef } from "react";
 import { prices } from "./data";
+import { useTranslation } from "@/hooks/useTranslation";
 
 const GOLD = "#d4a843";
 const GOLD_DIM = "rgba(212,168,67,0.10)";
@@ -11,6 +12,25 @@ const FG3 = "rgba(242,237,228,0.26)";
 
 export function HeroSection() {
   const tickerRef = useRef<HTMLDivElement>(null);
+  const { lang, t } = useTranslation();
+
+  const getCityTrans = (city: string) => {
+    const key = city.toLowerCase() as keyof typeof t.cities;
+    return t.cities[key] || city;
+  };
+
+  const getLabelTrans = (label: string) => {
+    const map: Record<string, keyof typeof t.labels> = {
+      "USD": "usdIqd",
+      "Gold 21K": "gold21k",
+      "EUR": "eur",
+      "GBP": "gbp",
+      "Gold 18K": "gold18k",
+      "TRY": "try",
+    };
+    const key = map[label];
+    return key ? t.labels[key] : label;
+  };
 
   // Duplicate ticker content for seamless loop
   useEffect(() => {
@@ -60,7 +80,7 @@ export function HeroSection() {
             animation: "pulseGreen 2.4s ease-in-out infinite",
           }} />
           <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "11px", color: FG2, letterSpacing: "0.04em" }}>
-            Live · Kurdistan & Iraq markets
+            {t.hero.liveBadge}
           </span>
         </div>
 
@@ -68,7 +88,7 @@ export function HeroSection() {
         <p style={{
           fontFamily: "'Geist Mono', monospace", fontSize: "10.5px",
           letterSpacing: "0.18em", color: GOLD, textTransform: "uppercase", marginBottom: "18px",
-        }}>Currency & Commodity Prices</p>
+        }}>{t.hero.eyebrow}</p>
 
         {/* Headline */}
         <h1 style={{
@@ -77,8 +97,8 @@ export function HeroSection() {
           fontWeight: 400, lineHeight: 1.0, letterSpacing: "-1px",
           color: FG, margin: "0 0 20px",
         }}>
-          Iraq&apos;s market data,<br />
-          <em style={{ fontStyle: "italic", color: GOLD }}>one endpoint.</em>
+          {t.hero.headlinePart1}<br />
+          <em style={{ fontStyle: "italic", color: GOLD }}>{t.hero.headlinePart2}</em>
         </h1>
 
         <p style={{
@@ -86,8 +106,7 @@ export function HeroSection() {
           maxWidth: "460px", margin: "0 auto 44px",
           fontFamily: "'Geist', sans-serif",
         }}>
-          Real-time rates from bazaars across Erbil, Baghdad, Sulaymaniyah, Duhok, and Kirkuk —
-          structured, consistent, always fresh.
+          {t.hero.description}
         </p>
 
         {/* CTAs */}
@@ -102,7 +121,7 @@ export function HeroSection() {
           }}
             onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 6px 32px rgba(212,168,67,0.38)"; }}
             onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 0 24px rgba(212,168,67,0.22)"; }}
-          >Start for free →</a>
+          >{t.hero.startFree}</a>
           <a href="#docs" style={{
             background: "rgba(242,237,228,0.04)", border: "1px solid rgba(242,237,228,0.1)",
             color: FG2, padding: "11px 24px", borderRadius: "8px",
@@ -111,7 +130,7 @@ export function HeroSection() {
           }}
             onMouseEnter={e => { e.currentTarget.style.background = "rgba(242,237,228,0.08)"; e.currentTarget.style.color = FG; }}
             onMouseLeave={e => { e.currentTarget.style.background = "rgba(242,237,228,0.04)"; e.currentTarget.style.color = FG2; }}
-          >Read the docs</a>
+          >{t.hero.readDocs}</a>
         </div>
 
         {/* Scrolling ticker */}
@@ -139,8 +158,8 @@ export function HeroSection() {
                 display: "inline-flex", alignItems: "center", gap: "10px",
                 padding: "0 28px", borderRight: `1px solid ${GOLD_BORDER}`,
               }}>
-                <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "9.5px", color: FG3, letterSpacing: "0.1em", textTransform: "uppercase" }}>{p.city}</span>
-                <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "11px", color: "#e8c068" }}>{p.label}</span>
+                <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "9.5px", color: FG3, letterSpacing: "0.1em", textTransform: "uppercase" }}>{getCityTrans(p.city)}</span>
+                <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "11px", color: "#e8c068" }}>{getLabelTrans(p.label)}</span>
                 <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "13px", fontWeight: 600, color: FG }}>{p.value}</span>
                 <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "10px", color: p.change.startsWith("+") ? "#4ade80" : "#f87171" }}>{p.change}</span>
               </div>
@@ -165,8 +184,8 @@ export function HeroSection() {
               onMouseEnter={e => { e.currentTarget.style.background = "rgba(212,168,67,0.08)"; e.currentTarget.style.borderColor = "rgba(212,168,67,0.35)"; }}
               onMouseLeave={e => { e.currentTarget.style.background = GOLD_DIM; e.currentTarget.style.borderColor = GOLD_BORDER; }}
             >
-              <div style={{ fontFamily: "'Geist Mono', monospace", fontSize: "9.5px", color: FG3, letterSpacing: "0.1em", marginBottom: "8px", textTransform: "uppercase" }}>{p.city}</div>
-              <div style={{ fontFamily: "'Geist Mono', monospace", fontSize: "11.5px", color: GOLD, marginBottom: "6px" }}>{p.label}</div>
+              <div style={{ fontFamily: "'Geist Mono', monospace", fontSize: "9.5px", color: FG3, letterSpacing: "0.1em", marginBottom: "8px", textTransform: "uppercase" }}>{getCityTrans(p.city)}</div>
+              <div style={{ fontFamily: "'Geist Mono', monospace", fontSize: "11.5px", color: GOLD, marginBottom: "6px" }}>{getLabelTrans(p.label)}</div>
               <div style={{ fontFamily: "'Geist Mono', monospace", fontSize: "17px", fontWeight: 600, color: FG, marginBottom: "5px" }}>{p.value}</div>
               <div style={{ fontFamily: "'Geist Mono', monospace", fontSize: "11px", color: p.change.startsWith("+") ? "#4ade80" : "#f87171" }}>{p.change}</div>
             </div>

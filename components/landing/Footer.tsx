@@ -1,4 +1,4 @@
-"use client";
+import { useTranslation } from "@/hooks/useTranslation";
 
 const G = {
   gold: "#d4a843",
@@ -14,44 +14,46 @@ const G = {
   sans: "'Geist', sans-serif",
 };
 
-const NAV_COLS = [
-  {
-    heading: "Product",
-    links: [
-      { label: "Documentation", href: "#docs" },
-      { label: "API Reference", href: "#docs" },
-      { label: "Coverage map", href: "/docs/coverage" },
-      { label: "Changelog", href: "/changelog" },
-    ],
-  },
-  {
-    heading: "Company",
-    links: [
-      { label: "About", href: "/about" },
-      { label: "Pricing", href: "#pricing" },
-      { label: "Contact", href: "/contact" },
-      { label: "List your project", href: "/showcase" },
-    ],
-  },
-  {
-    heading: "Legal",
-    links: [
-      { label: "Privacy policy", href: "/privacy" },
-      { label: "Terms of service", href: "/terms" },
-      { label: "Data sources", href: "/sources" },
-    ],
-  },
-];
-
-const STATUS = [
-  { city: "Erbil", ok: true },
-  { city: "Baghdad", ok: true },
-  { city: "Sulaymaniyah", ok: true },
-  { city: "Duhok", ok: true },
-  { city: "Kirkuk", ok: true },
-];
-
 export function Footer() {
+  const { t } = useTranslation();
+
+  const NAV_COLS = [
+    {
+      heading: t.footer.colProduct,
+      links: [
+        { label: t.footer.lnkDocs, href: "#docs" },
+        { label: t.footer.lnkApiRef, href: "#docs" },
+        { label: t.footer.lnkCoverage, href: "/docs/coverage" },
+        { label: t.footer.lnkChangelog, href: "/changelog" },
+      ],
+    },
+    {
+      heading: t.footer.colCompany,
+      links: [
+        { label: t.footer.lnkAbout, href: "/about" },
+        { label: t.footer.lnkPricing, href: "#pricing" },
+        { label: t.footer.lnkContact, href: "/contact" },
+        { label: t.footer.lnkShowcase, href: "/showcase" },
+      ],
+    },
+    {
+      heading: t.footer.colLegal,
+      links: [
+        { label: t.footer.lnkPrivacy, href: "/privacy" },
+        { label: t.footer.lnkTerms, href: "/terms" },
+        { label: t.footer.lnkDataSources, href: "/data-sources" },
+      ],
+    },
+  ];
+
+  const STATUS = [
+    { city: t.cities.erbil, ok: true },
+    { city: t.cities.baghdad, ok: true },
+    { city: t.cities.sulaymaniyah, ok: true },
+    { city: t.cities.duhok, ok: true },
+    { city: t.cities.kirkuk, ok: true },
+  ];
+
   return (
     <footer style={{
       borderTop: `1px solid ${G.goldBorder}`,
@@ -71,7 +73,7 @@ export function Footer() {
             boxShadow: "0 0 6px rgba(74,222,128,0.5)",
           }} />
           <span style={{ fontFamily: G.mono, fontSize: "11px", color: "rgba(74,222,128,0.8)", letterSpacing: "0.04em" }}>
-            All systems operational
+            {t.footer.statusOk}
           </span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "16px", flexWrap: "wrap" }}>
@@ -109,7 +111,7 @@ export function Footer() {
           </a>
 
           <p style={{ fontFamily: G.sans, fontSize: "13px", color: G.fg3, lineHeight: 1.7, margin: 0, maxWidth: "240px" }}>
-            Real-time currency and commodity prices from bazaars across Iraq and the Kurdistan Region.
+            {t.footer.brandDesc}
           </p>
 
           {/* IQD badge */}
@@ -118,14 +120,14 @@ export function Footer() {
             background: G.goldDim, border: `1px solid ${G.goldBorder}`,
             borderRadius: "8px", padding: "8px 12px", alignSelf: "flex-start",
           }}>
-            <span style={{ fontFamily: G.mono, fontSize: "11px", color: G.gold }}>Priced in IQD</span>
+            <span style={{ fontFamily: G.mono, fontSize: "11px", color: G.gold }}>{t.footer.badgeIqd}</span>
             <span style={{ fontFamily: G.mono, fontSize: "10px", color: G.fg3 }}>·</span>
-            <span style={{ fontFamily: G.mono, fontSize: "11px", color: G.fg3 }}>Built in Erbil 🇮🇶</span>
+            <span style={{ fontFamily: G.mono, fontSize: "11px", color: G.fg3 }}>{t.footer.badgeErbil}</span>
           </div>
 
           {/* API version */}
-          <div style={{ fontFamily: G.mono, fontSize: "10px", color: G.fg4, letterSpacing: "0.06em" }}>
-            API v2.0 · Updated daily
+          <div style={{ fontFamily: G.mono, fontSize: "10px", color: G.fg4, letterSpacing: "0.06em", direction: "ltr", alignSelf: "flex-start" }}>
+            {t.footer.apiVersion}
           </div>
         </div>
 
@@ -159,16 +161,16 @@ export function Footer() {
         display: "flex", alignItems: "center", justifyContent: "space-between",
         flexWrap: "wrap", gap: "10px",
       }}>
-        <span style={{ fontFamily: G.mono, fontSize: "10.5px", color: G.fg4, letterSpacing: "0.04em" }}>
-          © 2026 BorsaAPI. All rights reserved.
+        <span style={{ fontFamily: G.mono, fontSize: "10.5px", color: G.fg4, letterSpacing: "0.04em", direction: "ltr", display: "inline-block" }}>
+          {t.footer.copyright}
         </span>
-        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-          <span style={{ fontFamily: G.mono, fontSize: "10px", color: G.fg4 }}>base URL</span>
+        <div style={{ display: "flex", alignItems: "center", gap: "6px", direction: "ltr" }}>
+          <span style={{ fontFamily: G.mono, fontSize: "10px", color: G.fg4 }}>{t.footer.baseUrl}</span>
           <span style={{
             fontFamily: G.mono, fontSize: "10.5px", color: G.fg3,
             background: G.goldDim, border: `1px solid ${G.goldBorder}`,
             borderRadius: "5px", padding: "2px 8px",
-          }}>borsaapi.vercel.app/api/v2</span>
+          }}>borsapi.vercel.app/api/v2</span>
         </div>
       </div>
 

@@ -1,5 +1,5 @@
-"use client";
 import { useState } from "react";
+import { useTranslation } from "@/hooks/useTranslation";
 
 const G = {
   gold: "#d4a843",
@@ -72,7 +72,30 @@ const CITIES = [
 
 export function CitiesSection() {
   const [active, setActive] = useState(0);
-  const city = CITIES[active];
+  const { lang, t } = useTranslation();
+  const rawCity = CITIES[active];
+
+  const getTranslatedRegion = (region: string) => {
+    if (region === "Kurdistan Region") return t.citiesSection.regions.kurdistan;
+    if (region === "Baghdad Governorate") return t.citiesSection.regions.baghdad;
+    if (region === "Kirkuk Governorate") return t.citiesSection.regions.kirkuk;
+    return region;
+  };
+
+  const getTranslatedTag = (tag: string) => {
+    const map: Record<string, keyof typeof t.citiesSection.tags> = {
+      "Capital of Kurdistan": "capitalKurd",
+      "National capital": "nationalCap",
+      "Eastern Kurdistan": "eastKurd",
+      "Northern Kurdistan": "northKurd",
+      "Oil capital": "oilCap",
+    };
+    return t.citiesSection.tags[map[tag]] || tag;
+  };
+
+  const getTranslatedCityName = (cName: string) => {
+    return t.cities[cName.toLowerCase() as keyof typeof t.cities] || cName;
+  };
 
   return (
     <section style={{
@@ -85,20 +108,20 @@ export function CitiesSection() {
         <p style={{
           fontFamily: G.mono, fontSize: "10.5px", letterSpacing: "0.18em",
           color: G.gold, textTransform: "uppercase", marginBottom: "16px",
-        }}>Coverage</p>
+        }}>{t.citiesSection.coverage}</p>
         <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", flexWrap: "wrap", gap: "16px" }}>
           <h2 style={{
             fontFamily: G.serif, fontSize: "clamp(32px,4.5vw,56px)", fontWeight: 400,
             color: G.fg, lineHeight: 1.05, letterSpacing: "-0.5px", margin: 0,
           }}>
-            5 cities.<br />
-            <em style={{ fontStyle: "italic", color: G.gold }}>Every bazaar.</em>
+            {t.citiesSection.headlinePart1}<br />
+            <em style={{ fontStyle: "italic", color: G.gold }}>{t.citiesSection.headlinePart2}</em>
           </h2>
           <p style={{
             color: G.fg2, fontSize: "14px", lineHeight: 1.7,
             fontFamily: G.sans, maxWidth: "340px", margin: 0,
           }}>
-            Ground-truth prices collected directly from local exchange offices and commodity markets across Iraq and the Kurdistan Region.
+            {t.citiesSection.description}
           </p>
         </div>
       </div>
@@ -109,7 +132,7 @@ export function CitiesSection() {
       }} className="cities-grid">
 
         {/* LEFT — map panel */}
-        <div style={{
+        <div dir="ltr" style={{
           background: G.bgCode, border: `1px solid ${G.goldBorder}`,
           borderRadius: "16px", overflow: "hidden", position: "relative",
           aspectRatio: "4/3",
@@ -158,7 +181,7 @@ export function CitiesSection() {
                     fontSize="7.5" fill={isActive ? G.goldLight : G.fg3}
                     fontFamily="monospace"
                     style={{ transition: "fill 0.25s", userSelect: "none" }}
-                  >{c.name}</text>
+                  >{getTranslatedCityName(c.name)}</text>
                 </g>
               );
             })}
@@ -168,11 +191,11 @@ export function CitiesSection() {
           <div style={{
             position: "absolute", bottom: "14px", left: "16px",
             fontFamily: G.mono, fontSize: "9px", color: G.fg3, letterSpacing: "0.1em",
-          }}>IRAQ & KURDISTAN REGION</div>
+          }}>{t.citiesSection.mapLabelIraq}</div>
           <div style={{
             position: "absolute", top: "14px", right: "16px",
             fontFamily: G.mono, fontSize: "9px", color: G.fg3,
-          }}>tap a city</div>
+          }}>{t.citiesSection.mapLabelTap}</div>
         </div>
 
         {/* RIGHT — city detail + list */}
@@ -186,26 +209,26 @@ export function CitiesSection() {
           }}>
             <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "18px" }}>
               <div>
-                <div style={{ fontFamily: G.mono, fontSize: "9.5px", color: G.fg3, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "6px" }}>{city.region}</div>
-                <div style={{ fontFamily: G.serif, fontSize: "32px", color: G.fg, lineHeight: 1.1 }}>{city.name}</div>
+                <div style={{ fontFamily: G.mono, fontSize: "9.5px", color: G.fg3, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "6px" }}>{getTranslatedRegion(rawCity.region)}</div>
+                <div style={{ fontFamily: G.serif, fontSize: "32px", color: G.fg, lineHeight: 1.1 }}>{getTranslatedCityName(rawCity.name)}</div>
               </div>
               <div style={{ fontFamily: "'Noto Naskh Arabic', serif", fontSize: "24px", color: G.gold, opacity: 0.7, direction: "rtl", lineHeight: 1.2 }}>
-                {city.arabic}
+                {rawCity.arabic}
               </div>
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px", marginBottom: "18px" }}>
               {[
-                { label: "Pairs", value: `${city.pairs}` },
-                { label: "Refresh", value: city.updates },
-                { label: "Status", value: "Live" },
+                { label: t.citiesSection.lblPairs, value: `${rawCity.pairs}` },
+                { label: t.citiesSection.lblRefresh, value: t.code.featDailyTitle },
+                { label: t.citiesSection.lblStatus, value: t.citiesSection.lblLive },
               ].map((s, i) => (
                 <div key={i} style={{
                   background: "rgba(13,12,9,0.6)", border: `1px solid ${G.goldBorder}`,
                   borderRadius: "9px", padding: "10px 12px",
                 }}>
                   <div style={{ fontFamily: G.mono, fontSize: "9px", color: G.fg3, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "5px" }}>{s.label}</div>
-                  <div style={{ fontFamily: G.mono, fontSize: "15px", fontWeight: 600, color: s.label === "Status" ? "#4ade80" : G.gold }}>{s.value}</div>
+                  <div style={{ fontFamily: G.mono, fontSize: "15px", fontWeight: 600, color: s.label === t.citiesSection.lblStatus ? "#4ade80" : G.gold }}>{s.value}</div>
                 </div>
               ))}
             </div>
@@ -216,7 +239,7 @@ export function CitiesSection() {
               borderRadius: "100px", padding: "4px 12px",
             }}>
               <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: G.gold, display: "inline-block" }} />
-              <span style={{ fontFamily: G.mono, fontSize: "10px", color: G.fg2 }}>{city.tag}</span>
+              <span style={{ fontFamily: G.mono, fontSize: "10px", color: G.fg2 }}>{getTranslatedTag(rawCity.tag)}</span>
             </div>
           </div>
 
@@ -240,26 +263,25 @@ export function CitiesSection() {
                     background: i === active ? G.gold : "rgba(212,168,67,0.3)",
                     flexShrink: 0, transition: "background 0.2s",
                   }} />
-                  <span style={{ fontFamily: G.mono, fontSize: "13px", color: i === active ? G.fg : G.fg2 }}>{c.name}</span>
-                  <span style={{ fontFamily: G.mono, fontSize: "10px", color: G.fg3 }}>{c.region}</span>
+                  <span style={{ fontFamily: G.mono, fontSize: "13px", color: i === active ? G.fg : G.fg2 }}>{getTranslatedCityName(c.name)}</span>
+                  <span style={{ fontFamily: G.mono, fontSize: "10px", color: G.fg3 }}>{getTranslatedRegion(c.region)}</span>
                 </div>
                 <span style={{ fontFamily: G.mono, fontSize: "10.5px", color: i === active ? G.gold : G.fg3 }}>
-                  {c.pairs} pairs
+                  <span style={{ direction: "ltr", display: "inline-block" }}>{c.pairs}</span> {t.citiesSection.pairsCount}
                 </span>
               </button>
             ))}
           </div>
 
-          {/* Coverage summary */}
           <div style={{
             background: G.bgCode, border: `1px solid ${G.goldBorder}`,
             borderRadius: "12px", padding: "16px 18px",
             display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px",
           }}>
             <div>
-              <div style={{ fontFamily: G.mono, fontSize: "9px", color: G.fg3, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "5px" }}>Total coverage</div>
+              <div style={{ fontFamily: G.mono, fontSize: "9px", color: G.fg3, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "5px" }}>{t.citiesSection.totalCoverage}</div>
               <div style={{ fontFamily: G.mono, fontSize: "13px", color: G.fg2 }}>
-                <span style={{ color: G.gold, fontWeight: 600 }}>{CITIES.reduce((s, c) => s + c.pairs, 0)}</span> currency & commodity pairs across <span style={{ color: G.gold, fontWeight: 600 }}>5</span> cities
+                <span style={{ color: G.gold, fontWeight: 600, direction: "ltr", display: "inline-block" }}>{CITIES.reduce((s, c) => s + c.pairs, 0)}</span> {t.citiesSection.currencyPairsAcross} <span style={{ color: G.gold, fontWeight: 600, direction: "ltr", display: "inline-block" }}>5</span> {t.citiesSection.citiesLabel}
               </div>
             </div>
             <a href="/docs/coverage" style={{
@@ -271,7 +293,7 @@ export function CitiesSection() {
             }}
               onMouseEnter={e => (e.currentTarget.style.opacity = "0.82")}
               onMouseLeave={e => (e.currentTarget.style.opacity = "1")}
-            >View all pairs →</a>
+            >{t.citiesSection.viewAllPairs}</a>
           </div>
         </div>
       </div>

@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
+import { useTranslation } from "@/hooks/useTranslation";
 
 // ─── token styles ───────────────────────────────────────────────────────────
 const G = {
@@ -27,7 +28,7 @@ type Line = Tok[];
 const snippets: Record<string, Line[]> = {
   JavaScript: [
     [{ t: "kw", v: "const" }, { t: "plain", v: " res = " }, { t: "kw", v: "await" }, { t: "plain", v: " fetch(" }],
-    [{ t: "str", v: '  "https://borsaapi.vercel.app/api/v2/get-price?location=erbil&item=usd_iqd",' }],
+    [{ t: "str", v: '  "https://borsapi.vercel.app/api/v2/get-price?location=erbil&item=usd_iqd",' }],
     [{ t: "plain", v: "  { headers: {" }],
     [{ t: "str", v: '    "Authorization"' }, { t: "plain", v: ": " }, { t: "str", v: '"Bearer <YOUR_KEY>"' }],
     [{ t: "plain", v: "  }}" }],
@@ -39,7 +40,7 @@ const snippets: Record<string, Line[]> = {
     [{ t: "kw", v: "import" }, { t: "plain", v: " requests" }],
     [{ t: "plain", v: "" }],
     [{ t: "plain", v: "res = requests." }, { t: "fn", v: "get" }, { t: "plain", v: "(" }],
-    [{ t: "str", v: '  "https://borsaapi.vercel.app/api/v2/get-price?location=erbil&item=usd_iqd",' }],
+    [{ t: "str", v: '  "https://borsapi.vercel.app/api/v2/get-price?location=erbil&item=usd_iqd",' }],
     [{ t: "plain", v: "  headers={" }],
     [{ t: "str", v: '    "Authorization"' }, { t: "plain", v: ": " }, { t: "str", v: '"Bearer <YOUR_KEY>"' }],
     [{ t: "plain", v: "  }" }],
@@ -48,7 +49,7 @@ const snippets: Record<string, Line[]> = {
   ],
   curl: [
     [{ t: "fn", v: "curl" }, { t: "plain", v: " -X GET \\" }],
-    [{ t: "str", v: '  "https://borsaapi.vercel.app/api/v2/get-price?location=erbil&item=usd_iqd" \\' }],
+    [{ t: "str", v: '  "https://borsapi.vercel.app/api/v2/get-price?location=erbil&item=usd_iqd" \\' }],
     [{ t: "plain", v: "  -H " }, { t: "str", v: '"Authorization: Bearer <YOUR_KEY>"' }, { t: "plain", v: " \\" }],
     [{ t: "plain", v: "  -H " }, { t: "str", v: '"Accept: application/json"' }],
   ],
@@ -59,7 +60,7 @@ const snippets: Record<string, Line[]> = {
     [{ t: "plain", v: "}" }],
     [{ t: "plain", v: "" }],
     [{ t: "kw", v: "async function" }, { t: "plain", v: " " }, { t: "fn", v: "getPrice" }, { t: "plain", v: "(): " }, { t: "kw", v: "Promise" }, { t: "plain", v: "<PriceResult> {" }],
-    [{ t: "kw", v: "  const" }, { t: "plain", v: " res = " }, { t: "kw", v: "await" }, { t: "plain", v: " fetch(" }, { t: "str", v: '"https://borsaapi.vercel.app/api/v2/get-price?location=erbil&item=usd_iqd"' }, { t: "plain", v: ", {" }],
+    [{ t: "kw", v: "  const" }, { t: "plain", v: " res = " }, { t: "kw", v: "await" }, { t: "plain", v: " fetch(" }, { t: "str", v: '"https://borsapi.vercel.app/api/v2/get-price?location=erbil&item=usd_iqd"' }, { t: "plain", v: ", {" }],
     [{ t: "plain", v: "    headers: { " }, { t: "str", v: '"Authorization"' }, { t: "plain", v: ": " }, { t: "str", v: '"Bearer <KEY>"' }, { t: "plain", v: " }" }],
     [{ t: "plain", v: "  });" }],
     [{ t: "kw", v: "  return" }, { t: "plain", v: " res." }, { t: "fn", v: "json" }, { t: "plain", v: "();" }],
@@ -118,11 +119,12 @@ function getRawSnippet(lang: string) {
 
 // ─── component ───────────────────────────────────────────────────────────────
 export function CodeSection() {
-  const [lang, setLang] = useState("JavaScript");
+  const { lang, t } = useTranslation();
+  const [langTab, setLangTab] = useState("JavaScript");
   const [visibleLines, setVisibleLines] = useState(0);
   const [streaming, setStreaming] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const { copied, copy } = useCopy(getRawSnippet(lang));
+  const { copied, copy } = useCopy(getRawSnippet(langTab));
 
   // stream response lines on mount / lang change
   function runStream() {
@@ -146,7 +148,7 @@ export function CodeSection() {
     runStream();
     return () => { if (timerRef.current) clearTimeout(timerRef.current); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lang]);
+  }, [langTab]);
 
   const langs = Object.keys(snippets);
 
@@ -162,16 +164,16 @@ export function CodeSection() {
         <p style={{
           fontFamily: G.mono, fontSize: "10.5px", letterSpacing: "0.18em",
           color: G.gold, textTransform: "uppercase", marginBottom: "16px",
-        }}>Developer docs</p>
+        }}>{t.code.developerDocs}</p>
         <h2 style={{
           fontFamily: G.serif, fontSize: "clamp(32px,4.5vw,56px)", fontWeight: 400,
           color: G.fg, lineHeight: 1.05, letterSpacing: "-0.5px", margin: "0 0 18px",
         }}>
-          One request.<br />
-          <em style={{ fontStyle: "italic", color: G.gold }}>Fresh prices.</em>
+          {t.code.headlinePart1}<br />
+          <em style={{ fontStyle: "italic", color: G.gold }}>{t.code.headlinePart2}</em>
         </h2>
         <p style={{ color: G.fg2, fontSize: "15px", lineHeight: 1.75, fontFamily: G.sans, margin: 0 }}>
-          Pass your Bearer token, pick a city and pair. Structured JSON returns in under 50ms — with a timestamp so you always know how fresh the data is.
+          {t.code.description}
         </p>
       </div>
 
@@ -181,15 +183,17 @@ export function CodeSection() {
         background: G.goldBorder, border: `1px solid ${G.goldBorder}`,
         borderRadius: "12px", overflow: "hidden", marginBottom: "56px",
       }}>
-        {STATS.map((s, i) => (
+        {STATS.map((s, i) => {
+          const labels = [t.code.statAvgLatency, t.code.statCities, t.code.statUptime, t.code.statDaily];
+          return (
           <div key={i} style={{
             background: G.bgCode, padding: "20px 24px",
             display: "flex", flexDirection: "column", gap: "4px",
           }}>
-            <span style={{ fontFamily: G.mono, fontSize: "22px", fontWeight: 600, color: G.gold, letterSpacing: "-0.5px" }}>{s.value}</span>
-            <span style={{ fontFamily: G.mono, fontSize: "10.5px", color: G.fg3, letterSpacing: "0.06em", textTransform: "uppercase" }}>{s.label}</span>
+            <span style={{ fontFamily: G.mono, fontSize: "22px", fontWeight: 600, color: G.gold, letterSpacing: "-0.5px", direction: "ltr" }}>{s.value}</span>
+            <span style={{ fontFamily: G.mono, fontSize: "10.5px", color: G.fg3, letterSpacing: "0.06em", textTransform: "uppercase" }}>{labels[i]}</span>
           </div>
-        ))}
+        )})}
       </div>
 
       {/* ── Main 2-col grid ────────────────────────────────────────────────── */}
@@ -198,7 +202,7 @@ export function CodeSection() {
       }} className="code-grid">
 
         {/* LEFT — code block */}
-        <div>
+        <div dir="ltr" style={{ textAlign: "left" }}>
           {/* tab bar */}
           <div style={{
             display: "flex", gap: "2px", padding: "8px 8px 0",
@@ -207,10 +211,10 @@ export function CodeSection() {
             borderRadius: "12px 12px 0 0",
           }}>
             {langs.map(l => (
-              <button key={l} onClick={() => setLang(l)} style={{
-                background: lang === l ? G.goldDim : "transparent",
+              <button key={l} onClick={() => setLangTab(l)} style={{
+                background: langTab === l ? G.goldDim : "transparent",
                 border: "none", borderRadius: "6px 6px 0 0",
-                color: lang === l ? G.gold : G.fg3,
+                color: langTab === l ? G.gold : G.fg3,
                 padding: "7px 14px", cursor: "pointer",
                 fontFamily: G.mono, fontSize: "11.5px",
                 transition: "color 0.15s, background 0.15s",
@@ -223,7 +227,7 @@ export function CodeSection() {
               color: copied ? G.green : G.fg3, cursor: "pointer",
               fontFamily: G.mono, fontSize: "11px", padding: "7px 14px",
               transition: "color 0.2s", letterSpacing: "0.04em",
-            }}>{copied ? "✓ Copied" : "Copy"}</button>
+            }}>{copied ? t.code.copied : t.code.copyBtn}</button>
           </div>
 
           {/* code */}
@@ -236,7 +240,7 @@ export function CodeSection() {
             minHeight: "200px",
           }}>
             {/* line numbers + tokens */}
-            {(snippets[lang] ?? []).map((line, li) => (
+            {(snippets[langTab] ?? []).map((line, li) => (
               <div key={li} style={{ display: "flex", lineHeight: "1.85" }}>
                 <span style={{
                   fontFamily: G.mono, fontSize: "12px", color: G.fg3,
@@ -273,7 +277,7 @@ export function CodeSection() {
                   animation: streaming ? "pulseGold 1s ease-in-out infinite" : "none",
                 }} />
                 <span style={{ fontFamily: G.mono, fontSize: "11px", color: streaming ? G.gold : G.green, letterSpacing: "0.04em" }}>
-                  {streaming ? "streaming..." : "HTTP 200 OK"}
+                  {streaming ? t.code.streaming : "HTTP 200 OK"}
                 </span>
               </div>
               <span style={{ fontFamily: G.mono, fontSize: "10px", color: G.fg3 }}>application/json</span>
@@ -313,9 +317,11 @@ export function CodeSection() {
             <p style={{
               fontFamily: G.mono, fontSize: "10px", color: G.fg3,
               letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "12px",
-            }}>Endpoints</p>
+            }}>{t.code.endpointsTitle}</p>
             <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-              {ENDPOINTS.map((ep, i) => (
+              {ENDPOINTS.map((ep, i) => {
+                const descs = [t.code.epSingleItem, t.code.epAllPricesCity, t.code.epListCities, t.code.epListItems];
+                return (
                 <div key={i} style={{
                   display: "grid", gridTemplateColumns: "36px 1fr auto",
                   alignItems: "center", gap: "12px",
@@ -327,11 +333,11 @@ export function CodeSection() {
                   onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(212,168,67,0.08)"; (e.currentTarget as HTMLElement).style.borderColor = "rgba(212,168,67,0.35)"; }}
                   onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = G.goldDim; (e.currentTarget as HTMLElement).style.borderColor = G.goldBorder; }}
                 >
-                  <span style={{ color: G.gold, fontFamily: G.mono, fontSize: "10px", fontWeight: 600, letterSpacing: "0.04em" }}>{ep.method}</span>
-                  <span style={{ color: G.fg2, fontFamily: G.mono, fontSize: "12px" }}>{ep.path}</span>
-                  <span style={{ color: G.fg3, fontFamily: G.mono, fontSize: "10.5px", textAlign: "right" }}>{ep.desc}</span>
+                  <span style={{ color: G.gold, fontFamily: G.mono, fontSize: "10px", fontWeight: 600, letterSpacing: "0.04em", direction: "ltr" }}>{ep.method}</span>
+                  <span style={{ color: G.fg2, fontFamily: G.mono, fontSize: "12px", direction: "ltr" }}>{ep.path}</span>
+                  <span style={{ color: G.fg3, fontFamily: G.mono, fontSize: "10.5px", textAlign: lang === 'ku' ? "left" : "right" }}>{descs[i]}</span>
                 </div>
-              ))}
+              )})}
             </div>
           </div>
 
@@ -340,15 +346,15 @@ export function CodeSection() {
             <p style={{
               fontFamily: G.mono, fontSize: "10px", color: G.fg3,
               letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "12px",
-            }}>Included in every plan</p>
+            }}>{t.code.includedInPlan}</p>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
               {[
-                { icon: "⚡", title: "Sub-50ms p99", body: "Responses from CDN edge nodes closest to you" },
-                { icon: "🏙", title: "5 cities", body: "Erbil, Baghdad, Sulaymaniyah, Duhok, Kirkuk" },
-                { icon: "🔄", title: "4× daily", body: "Morning, midday, afternoon & evening sweeps" },
-                { icon: "🔒", title: "Bearer auth", body: "API key scoped to your project and rate limit" },
-                { icon: "📈", title: "History endpoint", body: "Full time-series back to data collection launch" },
-                { icon: "📦", title: "Typed SDKs", body: "JS / TS & Python packages on npm and PyPI" },
+                { icon: "⚡", title: t.code.featLatencyTitle, body: t.code.featLatencyBody },
+                { icon: "🏙", title: t.code.featCitiesTitle, body: t.code.featCitiesBody },
+                { icon: "🔄", title: t.code.featDailyTitle, body: t.code.featDailyBody },
+                { icon: "🔒", title: t.code.featAuthTitle, body: t.code.featAuthBody },
+                { icon: "📈", title: t.code.featHistoryTitle, body: t.code.featHistoryBody },
+                { icon: "📦", title: t.code.featSdkTitle, body: t.code.featSdkBody },
               ].map((f, i) => (
                 <div key={i} style={{
                   background: G.goldDim, border: `1px solid ${G.goldBorder}`,

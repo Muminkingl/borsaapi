@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { createClient } from '@/utils/supabase/client';
+import { useTranslation } from '@/hooks/useTranslation';
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 interface TokenStatus {
@@ -57,7 +58,7 @@ function Modal({ show, onClose, children }: { show: boolean; onClose: () => void
         className="relative w-full max-w-md rounded-2xl border bg-background shadow-2xl p-6"
         onClick={(e) => e.stopPropagation()}
       >
-        <button onClick={onClose} className="absolute top-4 right-4 text-muted-foreground hover:text-foreground">
+        <button onClick={onClose} className="absolute top-4 end-4 text-muted-foreground hover:text-foreground">
           <X className="h-4 w-4" />
         </button>
         {children}
@@ -69,6 +70,7 @@ function Modal({ show, onClose, children }: { show: boolean; onClose: () => void
 // ─── Main Page ───────────────────────────────────────────────────────────────
 export default function ApiKeysPage() {
   const supabase = createClient();
+  const { t } = useTranslation();
 
   const [status, setStatus] = useState<TokenStatus | null>(null);
   const [loading, setLoading] = useState(true);
@@ -167,9 +169,9 @@ export default function ApiKeysPage() {
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
-          <Key className="h-7 w-7" /> API Keys
+          <Key className="h-7 w-7" /> {t.apiKeys.title}
         </h1>
-        <p className="text-muted-foreground mt-1">Manage your Bearer access tokens for the BorsaAPI.</p>
+        <p className="text-muted-foreground mt-1">{t.apiKeys.subtitle}</p>
       </div>
 
       {/* ── State 1: No project (locked) ── */}
@@ -187,20 +189,19 @@ export default function ApiKeysPage() {
                   <Lock className="h-8 w-8 text-muted-foreground" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-semibold">API Key Locked</h2>
+                  <h2 className="text-xl font-semibold">{t.apiKeys.lockedTitle}</h2>
                   <p className="text-muted-foreground text-sm mt-1 max-w-sm">
-                    To get an API key on the Free plan, you must first submit your project for review.
-                    Supporter plan users can skip this step.
+                    {t.apiKeys.lockedDesc}
                   </p>
                 </div>
                 <div className="flex gap-3 flex-wrap justify-center">
                   <Button asChild>
                     <Link href="/dashboard/projects">
-                      Submit Your Project <ChevronRight className="ml-1 h-4 w-4" />
+                      {t.apiKeys.submitProjectProject} <ChevronRight className="ms-1 h-4 w-4 rtl:rotate-180" />
                     </Link>
                   </Button>
                   <Button variant="outline" asChild>
-                    <Link href="/#pricing">Upgrade Plan <Zap className="ml-1 h-4 w-4" /></Link>
+                    <Link href="/#pricing">{t.apiKeys.upgradePlan} <Zap className="ms-1 h-4 w-4" /></Link>
                   </Button>
                 </div>
               </CardContent>
@@ -214,9 +215,9 @@ export default function ApiKeysPage() {
             <div className="flex items-start gap-3 rounded-xl border border-yellow-500/40 bg-yellow-500/10 p-4">
               <Clock className="h-5 w-5 text-yellow-500 mt-0.5 shrink-0" />
               <div>
-                <p className="font-semibold text-yellow-600 dark:text-yellow-400">Project Under Review</p>
+                <p className="font-semibold text-yellow-600 dark:text-yellow-400">{t.apiKeys.underReview}</p>
                 <p className="text-sm text-muted-foreground">
-                  Your project has been submitted and is awaiting approval. You will be able to create an API key once it's approved.
+                  {t.apiKeys.underReviewDesc}
                 </p>
               </div>
             </div>
@@ -230,15 +231,15 @@ export default function ApiKeysPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-lg">Your API Key</CardTitle>
-                <CardDescription>Use this as a Bearer token in the Authorization header.</CardDescription>
+                <CardTitle className="text-lg">{t.apiKeys.yourApiKey}</CardTitle>
+                <CardDescription>{t.apiKeys.useAsBearer}</CardDescription>
               </div>
               <div className={`text-xs font-semibold px-3 py-1 rounded-full ${
                 s.plan === 'supporter'
                   ? 'bg-purple-500/20 text-purple-500'
                   : 'bg-muted text-muted-foreground'
               }`}>
-                {s.plan === 'supporter' ? '⚡ Supporter' : 'Free Plan'}
+                {s.plan === 'supporter' ? t.apiKeys.supporterBadge : t.apiKeys.freeBadge}
               </div>
             </div>
           </CardHeader>
@@ -261,7 +262,7 @@ export default function ApiKeysPage() {
                   </Button>
                 </>
               ) : (
-                <p className="text-muted-foreground text-sm italic">No API key created yet.</p>
+                <p className="text-muted-foreground text-sm italic">{t.apiKeys.noKeyYet}</p>
               )}
             </div>
 
@@ -269,11 +270,11 @@ export default function ApiKeysPage() {
             {s.token && (
               <div className="grid grid-cols-2 gap-4 text-sm text-muted-foreground">
                 <div>
-                  <p className="text-xs uppercase tracking-wide mb-1">Created</p>
+                  <p className="text-xs uppercase tracking-wide mb-1">{t.apiKeys.created}</p>
                   <p className="font-medium text-foreground">{new Date(s.token.created_at).toLocaleDateString()}</p>
                 </div>
                 <div>
-                  <p className="text-xs uppercase tracking-wide mb-1">Last Used</p>
+                  <p className="text-xs uppercase tracking-wide mb-1">{t.apiKeys.lastUsed}</p>
                   <p className="font-medium text-foreground">{timeAgo(s.token.last_used_at)}</p>
                 </div>
               </div>
@@ -302,7 +303,7 @@ export default function ApiKeysPage() {
                 }
               >
                 <Key className="h-4 w-4" />
-                {s.has_token ? 'Key Active' : 'Create Key'}
+                {s.has_token ? t.apiKeys.keyActive : t.apiKeys.createKey}
               </Button>
 
               <Button
@@ -312,15 +313,15 @@ export default function ApiKeysPage() {
                 className="gap-2"
               >
                 <RefreshCw className="h-4 w-4" />
-                Regenerate
+                {t.apiKeys.regenerate}
               </Button>
             </div>
 
             {/* Usage example */}
             {s.has_token && (
               <div className="rounded-xl bg-muted/50 border p-4 space-y-2">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Usage Example</p>
-                <pre className="text-xs overflow-x-auto text-foreground"><code>{`curl https://borsaapi.vercel.app/api/v2/get-price?item=usd&location=erbil \\
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t.apiKeys.usageExample}</p>
+                <pre className="text-xs overflow-x-auto text-foreground"><code>{`curl https://borsapi.vercel.app/api/v2/get-price?item=usd&location=erbil \\
   -H "Authorization: Bearer YOUR_TOKEN"`}</code></pre>
               </div>
             )}
@@ -340,11 +341,11 @@ export default function ApiKeysPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-green-500">
                   <CheckCircle2 className="h-5 w-5" />
-                  Your New API Key
+                  {t.apiKeys.newKeyTitle}
                 </CardTitle>
                 <CardDescription className="text-yellow-600 dark:text-yellow-400 flex items-center gap-2 font-medium">
                   <AlertTriangle className="h-4 w-4 shrink-0" />
-                  Copy this now. We do not store it. You cannot see it again after leaving this page.
+                  {t.apiKeys.newKeyAlert}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -367,7 +368,7 @@ export default function ApiKeysPage() {
                   onClick={() => setNewToken(null)}
                   className="text-muted-foreground"
                 >
-                  I have copied my key — dismiss
+                  {t.apiKeys.dismissCopy}
                 </Button>
               </CardContent>
             </Card>
@@ -384,20 +385,20 @@ export default function ApiKeysPage() {
             <div className="rounded-full bg-primary/10 p-3">
               <Key className="h-5 w-5 text-primary" />
             </div>
-            <h2 className="text-lg font-semibold">Create API Key</h2>
+            <h2 className="text-lg font-semibold">{t.apiKeys.createModalTitle}</h2>
           </div>
           <div className="rounded-xl border border-yellow-500/40 bg-yellow-500/10 p-4 flex gap-3">
             <AlertTriangle className="h-5 w-5 text-yellow-500 shrink-0 mt-0.5" />
             <div className="text-sm">
-              <p className="font-medium text-yellow-600 dark:text-yellow-400">Your key will only be shown once.</p>
-              <p className="text-muted-foreground mt-1">We do not store the raw key. If you lose it, you will need to regenerate a new one.</p>
+              <p className="font-medium text-yellow-600 dark:text-yellow-400">{t.apiKeys.createModalAlert1}</p>
+              <p className="text-muted-foreground mt-1">{t.apiKeys.createModalAlert2}</p>
             </div>
           </div>
           <div className="flex gap-3 justify-end pt-2">
-            <Button variant="outline" onClick={() => setShowCreateModal(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setShowCreateModal(false)}>{t.apiKeys.btnCancel}</Button>
             <Button onClick={handleCreate} disabled={actionLoading}>
-              {actionLoading ? <RefreshCw className="h-4 w-4 animate-spin mr-2" /> : null}
-              Generate Key
+              {actionLoading ? <RefreshCw className="h-4 w-4 animate-spin me-2" /> : null}
+              {t.apiKeys.btnGenerate}
             </Button>
           </div>
         </div>
@@ -410,16 +411,16 @@ export default function ApiKeysPage() {
             <div className="rounded-full bg-red-500/10 p-3">
               <AlertTriangle className="h-5 w-5 text-red-500" />
             </div>
-            <h2 className="text-lg font-semibold">Regenerate API Key?</h2>
+            <h2 className="text-lg font-semibold">{t.apiKeys.regenModalTitle}</h2>
           </div>
           <p className="text-sm text-muted-foreground">
-            Your current key will <span className="text-red-500 font-semibold">stop working immediately</span>. Every app or integration using it will break until you update them with the new key.
+            {t.apiKeys.regenModalAlert}
           </p>
           <div className="flex gap-3 justify-end pt-2">
-            <Button variant="outline" onClick={() => setShowRegenModal(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setShowRegenModal(false)}>{t.apiKeys.btnCancel}</Button>
             <Button variant="destructive" onClick={handleRegenerate} disabled={actionLoading}>
-              {actionLoading ? <RefreshCw className="h-4 w-4 animate-spin mr-2" /> : null}
-              Yes, Regenerate
+              {actionLoading ? <RefreshCw className="h-4 w-4 animate-spin me-2" /> : null}
+              {t.apiKeys.btnYesRegen}
             </Button>
           </div>
         </div>
@@ -432,16 +433,16 @@ export default function ApiKeysPage() {
             <div className="rounded-full bg-muted p-3">
               <Eye className="h-5 w-5 text-muted-foreground" />
             </div>
-            <h2 className="text-lg font-semibold">Key Cannot Be Revealed</h2>
+            <h2 className="text-lg font-semibold">{t.apiKeys.revealModalTitle}</h2>
           </div>
           <div className="text-sm text-muted-foreground space-y-2">
-            <p>Your API key was shown <span className="font-medium text-foreground">one time only</span> when it was created. For security, we only store a hash — the raw key is gone.</p>
-            <p>If you need to access your key again, you must <span className="font-medium text-foreground">regenerate a new one</span>. Your old key will stop working.</p>
+            <p>{t.apiKeys.revealModalDesc1}</p>
+            <p>{t.apiKeys.revealModalDesc2}</p>
           </div>
           <div className="flex gap-3 justify-end pt-2">
-            <Button variant="outline" onClick={() => setShowRevealModal(false)}>Close</Button>
+            <Button variant="outline" onClick={() => setShowRevealModal(false)}>{t.apiKeys.btnClose}</Button>
             <Button variant="destructive" onClick={() => { setShowRevealModal(false); setShowRegenModal(true); }}>
-              Regenerate Key
+              {t.apiKeys.btnRegenKey}
             </Button>
           </div>
         </div>

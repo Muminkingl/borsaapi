@@ -10,8 +10,10 @@ import { Activity, Key, Zap, TrendingUp, RefreshCw, CheckCircle2, Clock } from '
 import { formatDistanceToNow } from 'date-fns';
 
 import { Suspense } from 'react';
+import { useTranslation } from '@/hooks/useTranslation';
 
 function DashboardContent() {
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [data, setData] = useState<any>(null);
@@ -98,33 +100,33 @@ function DashboardContent() {
   // Formatting stats from returned API data
   const stats = [
     {
-      title: 'API Calls Today',
+      title: t.dashboard.apiCallsToday,
       value: data?.calls_today?.toLocaleString() || '0',
-      change: 'Reset at midnight UTC',
+      change: t.dashboard.resetAtMidnight,
       icon: Activity,
       color: 'text-blue-500',
       bg: 'bg-blue-500/10',
     },
     {
-      title: 'API Calls This Month',
+      title: t.dashboard.apiCallsThisMonth,
       value: data?.calls_this_month?.toLocaleString() || '0',
-      change: 'Current billing period',
+      change: t.dashboard.currentBillingPeriod,
       icon: TrendingUp,
       color: 'text-green-500',
       bg: 'bg-green-500/10',
     },
     {
-      title: 'Last Used',
-      value: data?.last_used ? formatDistanceToNow(new Date(data.last_used), { addSuffix: true }) : 'Never',
-      change: 'Most recent API request',
+      title: t.dashboard.lastUsed,
+      value: data?.last_used ? formatDistanceToNow(new Date(data.last_used), { addSuffix: true }) : t.dashboard.never,
+      change: t.dashboard.mostRecentRequest,
       icon: Key,
       color: 'text-purple-500',
       bg: 'bg-purple-500/10',
     },
     {
-      title: 'Rate Limit',
-      value: `${data?.rate_limit || 30} / min`,
-      change: data?.rate_limit === 120 ? 'Supporter plan' : 'Free plan',
+      title: t.dashboard.rateLimit,
+      value: `${data?.rate_limit || 30} ${t.dashboard.perMin}`,
+      change: data?.rate_limit === 120 ? t.dashboard.supporterPlan : t.dashboard.freePlan,
       icon: Zap,
       color: 'text-yellow-500',
       bg: 'bg-yellow-500/10',
@@ -193,10 +195,10 @@ function DashboardContent() {
               <Clock className="h-5 w-5 shrink-0 animate-pulse text-yellow-500" />
               <div>
                 <p className="text-sm font-semibold text-yellow-600 dark:text-yellow-400">
-                  Payment processing…
+                  {t.dashboard.paymentProcessing}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  We're confirming your payment with Wayl. Your plan will upgrade automatically in a few seconds.
+                  {t.dashboard.paymentConfirming}
                 </p>
               </div>
             </motion.div>
@@ -212,17 +214,17 @@ function DashboardContent() {
               <CheckCircle2 className="h-5 w-5 shrink-0 text-green-500" />
               <div>
                 <p className="text-sm font-semibold text-green-600 dark:text-green-400">
-                  🎉 You're now a Supporter!
+                  {t.dashboard.nowSupporter}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Your plan has been upgraded to 120 req/min. Thank you for supporting BorsaAPI!
+                  {t.dashboard.planUpgraded}
                 </p>
               </div>
               <button
                 onClick={() => setPaymentStatus(null)}
-                className="ml-auto text-xs text-muted-foreground hover:text-foreground transition-colors"
+                className="ms-auto text-xs text-muted-foreground hover:text-foreground transition-colors"
               >
-                Dismiss
+                {t.dashboard.dismiss}
               </button>
             </motion.div>
           )}
@@ -230,9 +232,9 @@ function DashboardContent() {
 
         {/* Page heading */}
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t.dashboard.dashboardTitle}</h1>
           <p className="text-muted-foreground mt-1">
-            Monitor your API usage and manage your BorsaAPI access.
+            {t.dashboard.dashboardDesc}
           </p>
         </div>
 
@@ -249,20 +251,20 @@ function DashboardContent() {
           <Zap className={`h-5 w-5 shrink-0 ${isSupporter ? 'text-purple-500' : 'text-yellow-500'}`} />
           <div>
             <p className={`text-sm font-semibold ${isSupporter ? 'text-purple-600 dark:text-purple-400' : 'text-yellow-600 dark:text-yellow-400'}`}>
-              {isSupporter ? 'Supporter Plan' : 'Free Plan'}
+              {isSupporter ? t.dashboard.supporterPlan : t.dashboard.freePlan}
             </p>
             <p className="text-xs text-muted-foreground">
               {isSupporter 
-                ? '120 requests / min · Thank you for your support!' 
-                : '30 requests / min · Upgrade for 120 req/min and priority support.'}
+                ? t.dashboard.supporterDesc 
+                : t.dashboard.freeDesc}
             </p>
           </div>
           {!isSupporter && (
             <a
               href="/#pricing"
-              className="ml-auto shrink-0 rounded-lg bg-yellow-500 px-4 py-1.5 text-xs font-semibold text-white hover:bg-yellow-600 transition-colors"
+              className="ms-auto shrink-0 rounded-lg bg-yellow-500 px-4 py-1.5 text-xs font-semibold text-white hover:bg-yellow-600 transition-colors"
             >
-              Upgrade
+              {t.dashboard.upgrade}
             </a>
           )}
         </motion.div>
@@ -306,7 +308,7 @@ function DashboardContent() {
           <ChartBarDefault 
             data={chartData} 
             isUp={isTrendUp} 
-            trendText={`Trending ${isTrendUp ? 'up' : 'down'} by ${trendPercent}% this month`} 
+            trendText={isTrendUp ? t.dashboard.trendingUp.replace('{percent}', trendPercent) : t.dashboard.trendingDown.replace('{percent}', trendPercent)} 
           />
         </motion.div>
       </div>

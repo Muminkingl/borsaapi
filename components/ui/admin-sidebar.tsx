@@ -36,17 +36,25 @@ import {
 } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 
-const menuItems = [
-  { title: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
-  { title: 'API Keys', icon: Key, href: '/dashboard/api-keys' },
-  { title: 'Project Listing', icon: FolderOpen, href: '/dashboard/projects' },
+// We will map over a function or within component to get translations
+const getMenuItems = (t: any) => [
+  { title: t.sidebar.dashboard, icon: LayoutDashboard, href: '/dashboard' },
+  { title: t.sidebar.apiKeys, icon: Key, href: '/dashboard/api-keys' },
+  { title: t.sidebar.projectListing, icon: FolderOpen, href: '/dashboard/projects' },
 ];
 
+import { useTranslation } from '@/hooks/useTranslation';
+
 export const AdminSidebar = memo(() => {
+  const { t } = useTranslation();
   const { theme, setTheme } = useTheme();
   const router = useRouter();
   const supabase = createClient();
+  const [mounted, setMounted] = useState(false);
   const [user, setUser] = useState<{ name: string; avatarUrl: string | null } | null>(null);
+
+  // Avoid hydration mismatch — theme is only known after mount on client
+  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -79,9 +87,9 @@ export const AdminSidebar = memo(() => {
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg overflow-hidden shrink-0">
                   <img src="/logo.png" alt="BorsaAPI Logo" className="w-full h-full object-cover" />
                 </div>
-                <div className="grid flex-1 text-left text-sm leading-tight">
+                <div className="grid flex-1 text-start text-sm leading-tight">
                   <span className="truncate font-semibold">BorsaAPI</span>
-                  <span className="truncate text-xs">Developer Portal</span>
+                  <span className="truncate text-xs">{t.sidebar.devPortal}</span>
                 </div>
               </Link>
             </SidebarMenuButton>
@@ -91,10 +99,10 @@ export const AdminSidebar = memo(() => {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+          <SidebarGroupLabel>{t.sidebar.navigation}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {menuItems.map((item) => {
+              {getMenuItems(t).map((item) => {
                 const Icon = item.icon;
                 return (
                   <SidebarMenuItem key={item.href}>
@@ -118,10 +126,11 @@ export const AdminSidebar = memo(() => {
           <SidebarMenuItem>
             <SidebarMenuButton
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              tooltip={theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+              tooltip={!mounted ? '' : theme === 'dark' ? t.sidebar.lightMode : t.sidebar.darkMode}
             >
-              {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-              <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
+              {/* Defer icon until mounted to prevent hydration mismatch */}
+              {mounted && (theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />)}
+              <span>{!mounted ? t.sidebar.darkMode : theme === 'dark' ? t.sidebar.lightMode : t.sidebar.darkMode}</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
 
@@ -140,9 +149,9 @@ export const AdminSidebar = memo(() => {
                       <span>{initials}</span>
                     )}
                   </div>
-                  <div className="grid flex-1 text-left text-sm leading-tight">
+                  <div className="grid flex-1 text-start text-sm leading-tight">
                     <span className="truncate font-semibold">{user?.name ?? 'Loading...'}</span>
-                    <span className="truncate text-xs text-muted-foreground">Free Plan</span>
+                    <span className="truncate text-xs text-muted-foreground">{t.sidebar.freePlan}</span>
                   </div>
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
@@ -157,8 +166,8 @@ export const AdminSidebar = memo(() => {
                   onClick={handleSignOut}
                   className="text-red-500 focus:text-red-500"
                 >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Sign Out
+                  <LogOut className="me-2 h-4 w-4" />
+                  {t.sidebar.signOut}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

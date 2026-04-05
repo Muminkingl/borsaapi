@@ -10,6 +10,7 @@ import {
   FolderOpen, Clock, CheckCircle2, XCircle, RefreshCw,
   ChevronRight, AlertTriangle, ExternalLink, Send, Pencil,
 } from 'lucide-react';
+import { useTranslation } from '@/hooks/useTranslation';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -90,6 +91,7 @@ function Spinner() {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function ProjectsPage() {
+  const { t } = useTranslation();
   const [view, setView] = useState<PageView>('loading');
   const [project, setProject] = useState<Project | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
@@ -180,10 +182,10 @@ export default function ProjectsPage() {
       {/* Page header */}
       <div>
         <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
-          <FolderOpen className="h-7 w-7" /> Project Listing
+          <FolderOpen className="h-7 w-7" /> {t.projects.title}
         </h1>
         <p className="text-muted-foreground mt-1">
-          Submit your project for review to unlock your free API key.
+          {t.projects.subtitle}
         </p>
       </div>
 
@@ -207,14 +209,13 @@ export default function ProjectsPage() {
                   <FolderOpen className="h-9 w-9 text-muted-foreground" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-semibold">List Your Project</h2>
+                  <h2 className="text-xl font-semibold">{t.projects.listProjectTitle}</h2>
                   <p className="text-muted-foreground text-sm mt-2 max-w-sm">
-                    You need to submit your project so we can verify legitimate API usage.
-                    Once approved, your free API key will be unlocked.
+                    {t.projects.listProjectDesc}
                   </p>
                 </div>
                 <Button size="lg" onClick={openFormForCreate} className="gap-2">
-                  Submit Your Project <ChevronRight className="h-4 w-4" />
+                  {t.projects.submitProject} <ChevronRight className="h-4 w-4 rtl:rotate-180" />
                 </Button>
               </CardContent>
             </Card>
@@ -229,10 +230,10 @@ export default function ProjectsPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Send className="h-5 w-5" />
-                  {isEditing ? 'Edit Your Submission' : 'Submit Your Project'}
+                  {isEditing ? t.projects.editSubmission : t.projects.submitProject}
                 </CardTitle>
                 <CardDescription>
-                  All fields marked * are required. Usually reviewed within 24 hours.
+                  {t.projects.formSubtitle}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -249,7 +250,7 @@ export default function ProjectsPage() {
                   {/* Project Name */}
                   <div>
                     <label className="text-sm font-medium mb-1.5 block">
-                      Project Name <span className="text-red-500">*</span>
+                      {t.projects.lblProjectName} <span className="text-red-500">*</span>
                     </label>
                     <Input
                       id="proj-name"
@@ -264,7 +265,7 @@ export default function ProjectsPage() {
                   {/* Project URL */}
                   <div>
                     <label className="text-sm font-medium mb-1.5 block">
-                      Project URL <span className="text-red-500">*</span>
+                      {t.projects.lblProjectUrl} <span className="text-red-500">*</span>
                     </label>
                     <Input
                       id="proj-url"
@@ -280,7 +281,7 @@ export default function ProjectsPage() {
                   {/* Description */}
                   <div>
                     <label className="text-sm font-medium mb-1.5 flex items-center justify-between">
-                      <span>Description <span className="text-red-500">*</span></span>
+                      <span>{t.projects.lblDescription} <span className="text-red-500">*</span></span>
                       <span className={`text-xs font-normal ${form.description.length > 280 ? 'text-orange-500' : 'text-muted-foreground'}`}>
                         {form.description.length} / 300
                       </span>
@@ -288,7 +289,7 @@ export default function ProjectsPage() {
                     <textarea
                       id="proj-description"
                       rows={3}
-                      placeholder="Briefly describe what your project does."
+                      placeholder="..."
                       value={form.description}
                       onChange={e => setField('description', e.target.value)}
                       maxLength={300}
@@ -300,12 +301,12 @@ export default function ProjectsPage() {
                   {/* How are you using */}
                   <div>
                     <label className="text-sm font-medium mb-1.5 block">
-                      How are you using BorsaAPI? <span className="text-red-500">*</span>
+                      {t.projects.lblHowUsing} <span className="text-red-500">*</span>
                     </label>
                     <textarea
                       id="proj-how-using"
                       rows={3}
-                      placeholder="e.g. Showing USD/IQD exchange rates in my mobile app for users in Iraqi Kurdistan."
+                      placeholder="..."
                       value={form.how_using}
                       onChange={e => setField('how_using', e.target.value)}
                       className={`flex w-full rounded-md border bg-transparent px-3 py-2 text-sm shadow-xs placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none transition-colors ${errors.how_using ? 'border-red-500' : 'border-input'}`}
@@ -316,7 +317,7 @@ export default function ProjectsPage() {
                   {/* Logo URL (optional) */}
                   <div>
                     <label className="text-sm font-medium mb-1.5 block">
-                      Logo URL <span className="text-muted-foreground font-normal">(optional)</span>
+                      {t.projects.lblLogoUrl} <span className="text-muted-foreground font-normal">{t.projects.optional}</span>
                     </label>
                     <Input
                       id="proj-logo"
@@ -331,8 +332,8 @@ export default function ProjectsPage() {
                     <Button type="submit" disabled={submitting} className="gap-2">
                       {submitting ? <Spinner /> : <Send className="h-4 w-4" />}
                       {submitting
-                        ? 'Submitting…'
-                        : isEditing ? 'Resubmit Project' : 'Submit Project'}
+                        ? t.projects.submitting
+                        : isEditing ? t.projects.resubmitProject : t.projects.submitProject}
                     </Button>
                     <Button
                       type="button"
@@ -342,7 +343,7 @@ export default function ProjectsPage() {
                         else setView('no-project');
                       }}
                     >
-                      Cancel
+                      {t.projects.btnCancel}
                     </Button>
                   </div>
 
@@ -356,38 +357,38 @@ export default function ProjectsPage() {
         {view === 'pending' && project && (
           <motion.div key="pending"
             initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}>
-            <Card className="border-l-4 border-l-yellow-500">
+            <Card className="border-s-4 border-s-yellow-500">
               <CardHeader>
                 <div className="flex items-center gap-3">
                   <div className="rounded-full bg-yellow-500/15 p-3 shrink-0">
                     <Clock className="h-6 w-6 text-yellow-500" />
                   </div>
                   <div>
-                    <CardTitle>Under Review</CardTitle>
+                    <CardTitle>{t.projects.statusUnderReview}</CardTitle>
                     <CardDescription className="mt-0.5">
-                      Usually reviewed within 24 hours.
+                      {t.projects.statusUnderReviewDesc}
                     </CardDescription>
                   </div>
-                  <span className="ml-auto text-xs font-semibold bg-yellow-500/15 text-yellow-600 dark:text-yellow-400 px-3 py-1 rounded-full">
-                    Pending
+                  <span className="ms-auto text-xs font-semibold bg-yellow-500/15 text-yellow-600 dark:text-yellow-400 px-3 py-1 rounded-full">
+                    {t.projects.statusPending}
                   </span>
                 </div>
               </CardHeader>
 
               <CardContent className="space-y-5">
                 <div className="rounded-xl border bg-muted/30 p-4 space-y-3">
-                  <Row label="Project" value={project.name} />
-                  <Row label="URL" value={
+                  <Row label={t.projects.rowProject} value={project.name} />
+                  <Row label={t.projects.rowUrl} value={
                     <a href={project.url} target="_blank" rel="noopener noreferrer"
                       className="text-primary hover:underline flex items-center gap-1 text-sm">
                       {project.url} <ExternalLink className="h-3 w-3" />
                     </a>
                   } />
-                  <Row label="Submitted" value={formatDate(project.created_at)} />
+                  <Row label={t.projects.rowSubmitted} value={formatDate(project.created_at)} />
                 </div>
 
                 <Button variant="outline" onClick={() => openFormForEdit(project)} className="gap-2">
-                  <Pencil className="h-4 w-4" /> Edit Submission
+                  <Pencil className="h-4 w-4" /> {t.projects.btnEditSubmission}
                 </Button>
               </CardContent>
             </Card>
@@ -398,28 +399,28 @@ export default function ProjectsPage() {
         {view === 'approved' && project && (
           <motion.div key="approved"
             initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}>
-            <Card className="border-l-4 border-l-green-500">
+            <Card className="border-s-4 border-s-green-500">
               <CardHeader>
                 <div className="flex items-center gap-3">
                   <div className="rounded-full bg-green-500/15 p-3 shrink-0">
                     <CheckCircle2 className="h-6 w-6 text-green-500" />
                   </div>
                   <div>
-                    <CardTitle>Project Approved</CardTitle>
+                    <CardTitle>{t.projects.statusApprovedTitle}</CardTitle>
                     <CardDescription className="mt-0.5">
-                      Your API key is now unlocked.
+                      {t.projects.statusApprovedDesc}
                     </CardDescription>
                   </div>
-                  <span className="ml-auto text-xs font-semibold bg-green-500/15 text-green-600 dark:text-green-400 px-3 py-1 rounded-full">
-                    Approved
+                  <span className="ms-auto text-xs font-semibold bg-green-500/15 text-green-600 dark:text-green-400 px-3 py-1 rounded-full">
+                    {t.projects.statusApprovedBadge}
                   </span>
                 </div>
               </CardHeader>
 
               <CardContent className="space-y-5">
                 <div className="rounded-xl border bg-muted/30 p-4 space-y-3">
-                  <Row label="Project" value={project.name} />
-                  <Row label="URL" value={
+                  <Row label={t.projects.rowProject} value={project.name} />
+                  <Row label={t.projects.rowUrl} value={
                     <a href={project.url} target="_blank" rel="noopener noreferrer"
                       className="text-primary hover:underline flex items-center gap-1 text-sm">
                       {project.url} <ExternalLink className="h-3 w-3" />
@@ -429,13 +430,13 @@ export default function ProjectsPage() {
 
                 <div className="rounded-xl border border-green-500/30 bg-green-500/5 p-4">
                   <p className="text-sm text-green-700 dark:text-green-400 font-medium">
-                    🎉 Your project is approved! Head to API Keys to create your token and start building.
+                    {t.projects.approvedMsg}
                   </p>
                 </div>
 
                 <Button asChild className="gap-2 bg-green-600 hover:bg-green-700">
                   <Link href="/dashboard/api-keys">
-                    Go to API Keys <ChevronRight className="h-4 w-4" />
+                    {t.projects.goApiKeys} <ChevronRight className="h-4 w-4 rtl:rotate-180" />
                   </Link>
                 </Button>
               </CardContent>
@@ -447,28 +448,28 @@ export default function ProjectsPage() {
         {view === 'rejected' && project && (
           <motion.div key="rejected"
             initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}>
-            <Card className="border-l-4 border-l-red-500">
+            <Card className="border-s-4 border-s-red-500">
               <CardHeader>
                 <div className="flex items-center gap-3">
                   <div className="rounded-full bg-red-500/15 p-3 shrink-0">
                     <XCircle className="h-6 w-6 text-red-500" />
                   </div>
                   <div>
-                    <CardTitle>Submission Rejected</CardTitle>
+                    <CardTitle>{t.projects.statusRejectedTitle}</CardTitle>
                     <CardDescription className="mt-0.5">
-                      Fix the issue below and resubmit.
+                      {t.projects.statusRejectedDesc}
                     </CardDescription>
                   </div>
-                  <span className="ml-auto text-xs font-semibold bg-red-500/15 text-red-600 dark:text-red-400 px-3 py-1 rounded-full">
-                    Rejected
+                  <span className="ms-auto text-xs font-semibold bg-red-500/15 text-red-600 dark:text-red-400 px-3 py-1 rounded-full">
+                    {t.projects.statusRejectedBadge}
                   </span>
                 </div>
               </CardHeader>
 
               <CardContent className="space-y-5">
                 <div className="rounded-xl border bg-muted/30 p-4 space-y-3">
-                  <Row label="Project" value={project.name} />
-                  <Row label="URL" value={
+                  <Row label={t.projects.rowProject} value={project.name} />
+                  <Row label={t.projects.rowUrl} value={
                     <a href={project.url} target="_blank" rel="noopener noreferrer"
                       className="text-primary hover:underline flex items-center gap-1 text-sm">
                       {project.url} <ExternalLink className="h-3 w-3" />
@@ -479,14 +480,14 @@ export default function ProjectsPage() {
                 {project.rejection_reason && (
                   <div className="rounded-xl border border-red-500/30 bg-red-500/5 p-4 space-y-1">
                     <p className="text-xs font-semibold text-red-600 dark:text-red-400 uppercase tracking-wide">
-                      Rejection Reason
+                      {t.projects.rejectionReason}
                     </p>
                     <p className="text-sm text-foreground mt-1">{project.rejection_reason}</p>
                   </div>
                 )}
 
                 <Button onClick={() => openFormForEdit(project)} className="gap-2 bg-red-600 hover:bg-red-700">
-                  <Pencil className="h-4 w-4" /> Fix and Resubmit
+                  <Pencil className="h-4 w-4" /> {t.projects.btnFixResubmit}
                 </Button>
               </CardContent>
             </Card>
@@ -503,7 +504,7 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex items-start justify-between gap-4 text-sm">
       <span className="text-muted-foreground shrink-0">{label}</span>
-      <span className="font-medium text-right">{value}</span>
+      <span className="font-medium text-end">{value}</span>
     </div>
   );
 }
