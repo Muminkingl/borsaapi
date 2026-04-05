@@ -7,10 +7,13 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { createClient } from '@/utils/supabase/client';
 import { Loader2 } from 'lucide-react';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export default function LoginForm2() {
   const [isLoading, setIsLoading] = useState(false);
   const supabase = createClient();
+  const { t, lang } = useTranslation();
+  const isRTL = lang === 'ku';
 
   const handleGoogleLogin = async () => {
     setIsLoading(true);
@@ -22,7 +25,7 @@ export default function LoginForm2() {
     });
   };
   return (
-    <div className="rose-gradient bg-background relative min-h-screen overflow-hidden">
+    <div dir={isRTL ? "rtl" : "ltr"} className="rose-gradient bg-background relative min-h-screen overflow-hidden">
       <div className="from-background absolute -top-10 left-0 h-1/2 w-full rounded-b-full bg-gradient-to-b to-transparent blur"></div>
       <div className="from-primary/80 absolute -top-64 left-0 h-1/2 w-full rounded-full bg-gradient-to-b to-transparent blur-3xl"></div>
       <div className="relative z-10 grid min-h-screen grid-cols-1 md:grid-cols-2">
@@ -39,19 +42,24 @@ export default function LoginForm2() {
               transition={{ duration: 0.8, delay: 0.2, ease: 'easeOut' }}
             >
               <img
-                src="https://i.postimg.cc/j5p27Zhp/roblox-logo.webp"
-                alt="Illustration"
-                className="mx-auto h-auto w-full md:w-90"
+                src="/logo.png"
+                alt="BorsaAPI Logo"
+                className="mx-auto h-auto w-48 md:w-64 drop-shadow-2xl"
               />
             </motion.div>
-            {/* <motion.h1
-              className="text-2xl md:text-4xl font-bold leading-tight tracking-tight"
+            <motion.div
+              className="relative mx-auto mt-4 w-max"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.4, ease: "easeOut" }}
             >
-              The make money app
-            </motion.h1> */}
+              <h1 className="text-5xl md:text-7xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-br from-primary to-primary/60" style={{ fontFamily: "'Instrument Serif', serif" }}>
+                BorsaAPI
+              </h1>
+              <svg className="absolute -bottom-6 left-0 w-full text-primary/30" viewBox="0 0 100 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M0 10 Q 50 20 100 10" stroke="currentColor" strokeWidth="4" strokeLinecap="round" fill="none" />
+              </svg>
+            </motion.div>
           </div>
         </motion.div>
 
@@ -78,12 +86,11 @@ export default function LoginForm2() {
                 >
                   <div className="flex items-center justify-center space-x-2">
                     <span className="text-2xl font-bold tracking-tight md:text-4xl">
-                      Login
+                      {t.login.title}
                     </span>
                   </div>
-                  <p className="text-muted-foreground text-sm">
-                    Create an account or log in to discover Purgions and find
-                    ways to make money.
+                  <p className="text-muted-foreground text-sm whitespace-pre-line">
+                    {t.login.subtitle}
                   </p>
                 </motion.div>
 
@@ -115,7 +122,7 @@ export default function LoginForm2() {
                         <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
                       </svg>
                     )}
-                    <span className="ml-2">{isLoading ? 'Connecting to Google...' : 'Sign in with Google'}</span>
+                    <span className="ml-2">{isLoading ? t.login.connecting : t.login.signInGoogle}</span>
                   </Button>
                 </motion.div>
 
@@ -126,21 +133,21 @@ export default function LoginForm2() {
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.5, delay: 1.0, ease: 'easeOut' }}
                 >
-                  By signing in you agree to our{' '}
+                  {t.login.terms}{' '}
                   <Link
                     prefetch={false}
-                    href="#"
+                    href="/terms"
                     className="text-muted-foreground hover:text-primary underline"
                   >
-                    terms of service
+                    {t.login.termsLink}
                   </Link>{' '}
-                  and{' '}
+                  {t.login.and}{' '}
                   <Link
                     prefetch={false}
-                    href="#"
+                    href="/privacy"
                     className="text-muted-foreground hover:text-primary underline"
                   >
-                    privacy policy
+                    {t.login.privacyLink}
                   </Link>
                   .
                 </motion.p>

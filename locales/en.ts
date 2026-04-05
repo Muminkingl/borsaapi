@@ -311,5 +311,17 @@ export const en = {
     baghdadDesc: "Central pricing is referenced continuously via main dealer networks active out of Kifah and Harthiya. Differences in supply/transfer routes create the spread seen uniquely on BorsaAPI.",
     goldTitle: "Gold & Precious Metals",
     goldDesc: "21 Carat and 18 Carat gold pricing are gathered dynamically through trusted jeweler's syndicate announcements available across Iraqi Telegram channels, matching standard market buy/sell values in Mithqal."
+  },
+  login: {
+    title: "Sign in to BorsaAPI",
+    subtitle: "Access real-time Kurdish & Iraqi market data. Get your API key and start building.",
+    signInGoogle: "Sign in with Google",
+    connecting: "Connecting...",
+    terms: "By signing in you agree to our",
+    termsLink: "Terms of Service",
+    and: "and",
+    privacyLink: "Privacy Policy",
+    tagline: "Real-time bazaar prices,\none API call away.",
+    badge: "Live · Kurdistan & Iraq"
   }
 };
