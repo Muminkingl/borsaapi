@@ -76,8 +76,8 @@ export async function POST(req: NextRequest) {
     .eq('id', authUser.id)
     .single();
 
-  // Fire-and-forget Telegram notification
-  notifyNewProject(data, { name: userProfile?.name, email: authUser.email });
+  // Fire and wait for Telegram notification
+  await notifyNewProject(data, { name: userProfile?.name, email: authUser.email });
 
   return NextResponse.json({ project: data, message: 'Project submitted for review!' }, { status: 201 });
 }
@@ -131,7 +131,7 @@ export async function PUT(req: NextRequest) {
       .select('name')
       .eq('id', authUser.id)
       .single();
-    notifyResubmit(data, { name: userProfile?.name, email: authUser.email });
+    await notifyResubmit(data, { name: userProfile?.name, email: authUser.email });
   }
 
   return NextResponse.json({ project: data, message: 'Project resubmitted for review.' });

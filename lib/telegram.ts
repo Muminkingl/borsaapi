@@ -13,7 +13,7 @@ export async function sendTelegramMessage(
   parseMode: 'HTML' | 'Markdown' = 'HTML'
 ): Promise<void> {
   try {
-    await fetch(`${TELEGRAM_API}/sendMessage`, {
+    const res = await fetch(`${TELEGRAM_API}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -23,7 +23,12 @@ export async function sendTelegramMessage(
         disable_web_page_preview: true,
       }),
     });
-  } catch {
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error('Telegram API error:', res.status, errText);
+    }
+  } catch (error) {
+    console.error('Failed to send Telegram message:', error);
     // Never crash the user's request over a Telegram failure
   }
 }
