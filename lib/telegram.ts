@@ -4,8 +4,22 @@ const ADMIN_CHAT_ID = process.env.TELEGRAM_CHAT_ID!;
 const TELEGRAM_API = `https://api.telegram.org/bot${BOT_TOKEN}`;
 
 /**
- * Send a plain text message to a specific chat.
- * Fire-and-forget safe (errors are swallowed).
+ * Escapes special HTML characters so Telegram's HTML parse_mode
+ * does not throw entity parsing errors or allow HTML injection.
+ */
+export function escapeHtml(str: string | null | undefined): string {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/**
+ * Send a plain text or HTML message to a specific chat.
+ * Fire-and-forget safe (errors are logged and caught).
  */
 export async function sendTelegramMessage(
   chatId: string | number,
@@ -47,17 +61,25 @@ export async function notifyNewProject(project: {
   name?: string | null;
   email?: string | null;
 }): Promise<void> {
+  const safeName = escapeHtml(user.name ?? 'Unknown');
+  const safeEmail = escapeHtml(user.email ?? 'Unknown');
+  const safeProjectName = escapeHtml(project.name);
+  const safeUrl = escapeHtml(project.url);
+  const safeHowUsing = escapeHtml(project.how_using);
+  const safeDescription = escapeHtml(project.description);
+  const safeId = encodeURIComponent(project.id);
+
   const text =
     `🆕 <b>New Project Submitted</b>\n\n` +
-    `👤 Name: ${user.name ?? 'Unknown'}\n` +
-    `📧 Email: ${user.email ?? 'Unknown'}\n` +
-    `🌐 Project: ${project.name}\n` +
-    `🔗 URL: ${project.url}\n` +
-    `📝 Use case: ${project.how_using}\n\n` +
-    `📄 Description: ${project.description}\n\n` +
+    `👤 Name: ${safeName}\n` +
+    `📧 Email: ${safeEmail}\n` +
+    `🌐 Project: ${safeProjectName}\n` +
+    `🔗 URL: ${safeUrl}\n` +
+    `📝 Use case: ${safeHowUsing}\n\n` +
+    `📄 Description: ${safeDescription}\n\n` +
     `Reply (Tap to copy):\n` +
-    `✅ <code>/approve_${project.id}</code>\n` +
-    `❌ <code>/reject_${project.id} your reason here</code>`;
+    `✅ <code>/approve_${safeId}</code>\n` +
+    `❌ <code>/reject_${safeId} your reason here</code>`;
 
   await sendTelegramMessage(ADMIN_CHAT_ID, text);
 }
@@ -74,16 +96,23 @@ export async function notifyResubmit(project: {
   name?: string | null;
   email?: string | null;
 }): Promise<void> {
+  const safeName = escapeHtml(user.name ?? 'Unknown');
+  const safeEmail = escapeHtml(user.email ?? 'Unknown');
+  const safeProjectName = escapeHtml(project.name);
+  const safeUrl = escapeHtml(project.url);
+  const safeHowUsing = escapeHtml(project.how_using);
+  const safeId = encodeURIComponent(project.id);
+
   const text =
     `🔄 <b>Project Resubmitted</b>\n\n` +
-    `👤 Name: ${user.name ?? 'Unknown'}\n` +
-    `📧 Email: ${user.email ?? 'Unknown'}\n` +
-    `🌐 Project: ${project.name}\n` +
-    `🔗 URL: ${project.url}\n` +
-    `📝 Use case: ${project.how_using}\n\n` +
+    `👤 Name: ${safeName}\n` +
+    `📧 Email: ${safeEmail}\n` +
+    `🌐 Project: ${safeProjectName}\n` +
+    `🔗 URL: ${safeUrl}\n` +
+    `📝 Use case: ${safeHowUsing}\n\n` +
     `Reply (Tap to copy):\n` +
-    `✅ <code>/approve_${project.id}</code>\n` +
-    `❌ <code>/reject_${project.id} your reason here</code>`;
+    `✅ <code>/approve_${safeId}</code>\n` +
+    `❌ <code>/reject_${safeId} your reason here</code>`;
 
   await sendTelegramMessage(ADMIN_CHAT_ID, text);
 }

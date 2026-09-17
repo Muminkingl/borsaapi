@@ -1,7 +1,7 @@
-import { createHmac } from 'crypto';
+import crypto from 'crypto';
 
 /**
- * Verifies the HMAC-SHA256 signature from Wayl webhook requests.
+ * Verifies the HMAC-SHA256 signature from Wayl webhook requests using timing-safe comparison.
  * @param body - Raw request body string
  * @param signature - Signature from x-wayl-signature header
  * @param secret - Your WAYL_WEBHOOK_SECRET
@@ -11,19 +11,20 @@ export function verifyWebhookSignature(
   signature: string,
   secret: string
 ): boolean {
+  if (!secret || !signature || !body) return false;
+
   try {
-    const expectedSignature = createHmac('sha256', secret)
+    const expectedSignature = crypto
+      .createHmac('sha256', secret)
       .update(body)
       .digest('hex');
 
-    // Constant-time comparison to prevent timing attacks
-    if (expectedSignature.length !== signature.length) return false;
+    const expectedBuf = Buffer.from(expectedSignature);
+    const signatureBuf = Buffer.from(signature);
 
-    let result = 0;
-    for (let i = 0; i < expectedSignature.length; i++) {
-      result |= expectedSignature.charCodeAt(i) ^ signature.charCodeAt(i);
-    }
-    return result === 0;
+    if (expectedBuf.length !== signatureBuf.length) return false;
+
+    return crypto.timingSafeEqual(expectedBuf, signatureBuf);
   } catch {
     return false;
   }

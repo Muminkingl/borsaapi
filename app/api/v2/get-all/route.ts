@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { validateBearerToken } from '@/lib/api/auth';
-import { checkRateLimit } from '@/lib/api/rate-limit';
+import { checkRateLimit, applyRateLimitHeaders } from '@/lib/api/rate-limit';
 import { isStale } from '@/lib/api/stale';
 
 export async function GET(req: NextRequest) {
@@ -23,9 +23,11 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  // 3. Check rate limit & log
-  const rateResult = await checkRateLimit(auth, 'all', location);
-  if ('error' in rateResult) return rateResult.error;
+  // 3. Check rate limit
+  const rateResult = await checkRateLimit(auth);
+  if (!rateResult.allowed && rateResult.error) {
+    return rateResult.error;
+  }
 
   // 4. Resolve city_id
   const { data: cityRow } = await supabase
@@ -50,7 +52,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'No items found.' }, { status: 500 });
   }
 
-  // 6. For each item, get the latest price in this city
+  // 6. For each item, get latest price in this city
   const pricePromises = items.map(async (item) => {
     const { data } = await supabase
       .from('prices')
@@ -59,7 +61,7 @@ export async function GET(req: NextRequest) {
       .eq('city_id', cityRow.id)
       .order('created_at', { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle();
 
     return {
       slug: item.slug,
@@ -84,19 +86,30 @@ export async function GET(req: NextRequest) {
 
   const responseMs = Date.now() - startTime;
 
-  // 8. Log Usage (Fire and forget)
-  supabase.from('api_tokens').update({ last_used_at: new Date().toISOString() }).eq('id', auth.tokenId).then();
-  supabase.from('usage_logs').insert({
-    token_id: auth.tokenId,
-    user_id: auth.userId,
-    item_slug: 'all',
-    city_slug: location,
-    response_ms: responseMs
-  }).then();
+  // 8. Log Usage (Guaranteed completion in serverless environments)
+  await Promise.allSettled([
+    supabase
+      .from('api_tokens')
+      .update({ last_used_at: new Date().toISOString() })
+      .eq('id', auth.tokenId),
+    supabase.from('usage_logs').insert({
+      token_id: auth.tokenId,
+      user_id: auth.userId,
+      item_slug: 'all',
+      city_slug: location,
+      response_ms: responseMs,
+    }),
+  ]);
 
-  return NextResponse.json({
+  const res = NextResponse.json({
     location,
     updated_at: latestUpdate,
     prices,
   });
+
+  // Attach rate limit headers & short caching
+  applyRateLimitHeaders(res, rateResult);
+  res.headers.set('Cache-Control', 'private, max-age=5, stale-while-revalidate=15');
+
+  return res;
 }

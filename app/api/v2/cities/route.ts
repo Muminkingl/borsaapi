@@ -11,5 +11,12 @@ export async function GET() {
     return NextResponse.json({ error: 'Failed to fetch cities.' }, { status: 500 });
   }
 
-  return NextResponse.json({ cities: data });
+  return NextResponse.json(
+    { cities: data },
+    {
+      headers: {
+        'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
+      },
+    }
+  );
 }

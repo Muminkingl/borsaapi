@@ -11,5 +11,12 @@ export async function GET() {
     return NextResponse.json({ error: 'Failed to fetch items.' }, { status: 500 });
   }
 
-  return NextResponse.json({ items: data });
+  return NextResponse.json(
+    { items: data },
+    {
+      headers: {
+        'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
+      },
+    }
+  );
 }

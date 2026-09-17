@@ -1,19 +1,20 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { NextResponse } from 'next/server';
+import { supabase as adminSupabase } from '@/lib/supabase';
+import { createClient } from '@/utils/supabase/server';
 import crypto from 'crypto';
 
-async function getUserId(req: NextRequest): Promise<string | null> {
-  return req.headers.get('x-user-id');
-}
+export async function POST() {
+  const supabase = await createClient();
+  const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
 
-export async function POST(req: NextRequest) {
-  const userId = await getUserId(req);
-  if (!userId) {
+  if (authError || !authUser) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const userId = authUser.id;
+
   // 1. Check if token already exists
-  const { data: existingToken } = await supabase
+  const { data: existingToken } = await adminSupabase
     .from('api_tokens')
     .select('id')
     .eq('user_id', userId)
@@ -27,13 +28,13 @@ export async function POST(req: NextRequest) {
   }
 
   // 2. Check eligibility
-  const { data: user } = await supabase
+  const { data: user } = await adminSupabase
     .from('users')
     .select('plan')
     .eq('id', userId)
     .single();
 
-  const { data: project } = await supabase
+  const { data: project } = await adminSupabase
     .from('projects')
     .select('status')
     .eq('user_id', userId)
@@ -64,7 +65,7 @@ export async function POST(req: NextRequest) {
   const tokenPrefix = rawToken.slice(0, 8);
 
   // 4. Insert only the hash (never store raw token)
-  const { error } = await supabase.from('api_tokens').insert({
+  const { error } = await adminSupabase.from('api_tokens').insert({
     user_id: userId,
     token: tokenPrefix, // legacy column — store prefix only
     token_hash: tokenHash,

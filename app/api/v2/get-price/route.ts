@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { validateBearerToken } from '@/lib/api/auth';
-import { checkRateLimit } from '@/lib/api/rate-limit';
+import { checkRateLimit, applyRateLimitHeaders } from '@/lib/api/rate-limit';
 import { isStale } from '@/lib/api/stale';
 
 export async function GET(req: NextRequest) {
   const startTime = Date.now();
-  
+
   // 1. Validate Bearer token
   const authResult = await validateBearerToken(req);
   if ('error' in authResult) return authResult.error;
@@ -24,9 +24,11 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  // 3. Check rate limit & log
-  const rateResult = await checkRateLimit(auth, item, location);
-  if ('error' in rateResult) return rateResult.error;
+  // 3. Check rate limit
+  const rateResult = await checkRateLimit(auth);
+  if (!rateResult.allowed && rateResult.error) {
+    return rateResult.error;
+  }
 
   // 4. Resolve item_id
   const { data: itemRow } = await supabase
@@ -56,7 +58,7 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  // 6. Get latest price for this item+city (uses our index)
+  // 6. Get latest price for this item+city (uses index)
   const { data: priceRow, error } = await supabase
     .from('prices')
     .select('value, created_at')
@@ -75,21 +77,32 @@ export async function GET(req: NextRequest) {
 
   const responseMs = Date.now() - startTime;
 
-  // 7. Log Usage (Fire and forget)
-  supabase.from('api_tokens').update({ last_used_at: new Date().toISOString() }).eq('id', auth.tokenId).then();
-  supabase.from('usage_logs').insert({
-    token_id: auth.tokenId,
-    user_id: auth.userId,
-    item_slug: item,
-    city_slug: location,
-    response_ms: responseMs
-  }).then();
+  // 7. Log Usage (Guaranteed completion in serverless environments)
+  await Promise.allSettled([
+    supabase
+      .from('api_tokens')
+      .update({ last_used_at: new Date().toISOString() })
+      .eq('id', auth.tokenId),
+    supabase.from('usage_logs').insert({
+      token_id: auth.tokenId,
+      user_id: auth.userId,
+      item_slug: item,
+      city_slug: location,
+      response_ms: responseMs,
+    }),
+  ]);
 
-  return NextResponse.json({
+  const res = NextResponse.json({
     value: priceRow.value,
     item,
     location,
     created_at: priceRow.created_at,
     is_stale: isStale(priceRow.created_at),
   });
+
+  // Attach rate limit headers & short caching
+  applyRateLimitHeaders(res, rateResult);
+  res.headers.set('Cache-Control', 'private, max-age=5, stale-while-revalidate=15');
+
+  return res;
 }

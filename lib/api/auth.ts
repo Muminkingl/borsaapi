@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import crypto from 'crypto';
 
 export interface AuthContext {
   tokenId: string;
@@ -20,10 +21,13 @@ export async function validateBearerToken(
     };
   }
 
-  const rawToken = authHeader.split(' ')[1];
+  const rawToken = authHeader.substring(7).trim();
+  if (!rawToken || rawToken.length < 16) {
+    return {
+      error: NextResponse.json({ error: 'Invalid API key format.' }, { status: 401 }),
+    };
+  }
 
-  // Hash the token since DB stores hashed tokens (Assuming we used SHA-256 for token_hash)
-  const crypto = require('crypto');
   const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
 
   const { data: tokenRecord, error } = await supabase
@@ -38,24 +42,34 @@ export async function validateBearerToken(
     };
   }
 
-  // Ensure the user actually has an approved project (Business logic constraint)
-  const { data: project } = await supabase
-    .from('projects')
-    .select('status')
-    .eq('user_id', tokenRecord.user_id)
-    .single();
+  const userPlan = ((tokenRecord.users as unknown) as { plan?: string } | null)?.plan || 'free';
+  const isSupporter = userPlan === 'supporter';
 
-  if (project?.status !== 'approved') {
-     return {
-       error: NextResponse.json({ error: 'Project not approved. Visit dashboard/projects' }, { status: 403 }),
-     };
+  // If not a paying supporter, ensure the user has an approved project
+  if (!isSupporter) {
+    const { data: project } = await supabase
+      .from('projects')
+      .select('status')
+      .eq('user_id', tokenRecord.user_id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (project?.status !== 'approved') {
+      return {
+        error: NextResponse.json(
+          { error: 'Project not approved. Visit dashboard/projects' },
+          { status: 403 }
+        ),
+      };
+    }
   }
 
   return {
     auth: {
       tokenId: tokenRecord.id,
       userId: tokenRecord.user_id,
-      plan: (tokenRecord.users as any)?.plan || 'free',
+      plan: userPlan,
     },
   };
 }

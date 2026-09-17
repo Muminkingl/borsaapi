@@ -1,28 +1,28 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
-import crypto from 'crypto';
+import { NextResponse } from 'next/server';
+import { supabase as adminSupabase } from '@/lib/supabase';
+import { createClient } from '@/utils/supabase/server';
 
-async function getUserId(req: NextRequest): Promise<string | null> {
-  return req.headers.get('x-user-id');
-}
+export async function GET() {
+  const supabase = await createClient();
+  const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
 
-export async function GET(req: NextRequest) {
-  const userId = await getUserId(req);
-  if (!userId) {
+  if (authError || !authUser) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const userId = authUser.id;
+
   // Get user plan + project status + existing token in one go
   const [userRes, projectRes, tokenRes] = await Promise.all([
-    supabase.from('users').select('plan').eq('id', userId).single(),
-    supabase
+    adminSupabase.from('users').select('plan').eq('id', userId).single(),
+    adminSupabase
       .from('projects')
       .select('status')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
       .limit(1)
       .single(),
-    supabase
+    adminSupabase
       .from('api_tokens')
       .select('id, token_prefix, created_at, last_used_at')
       .eq('user_id', userId)

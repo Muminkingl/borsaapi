@@ -32,7 +32,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = await req.json();
+    let body: any = {};
+    try {
+      body = await req.json();
+    } catch {
+      // Allow empty or default body
+    }
     const { plan = 'supporter', billingCycle = 'monthly' } = body;
 
     // Validate plan

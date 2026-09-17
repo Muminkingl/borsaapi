@@ -88,10 +88,8 @@ export default function ApiKeysPage() {
   const [actionError, setActionError] = useState<string | null>(null);
 
   // Fetch status
-  const fetchStatus = useCallback(async (uid: string) => {
-    const res = await fetch('/api/user/token/status', {
-      headers: { 'x-user-id': uid },
-    });
+  const fetchStatus = useCallback(async () => {
+    const res = await fetch('/api/user/token/status');
     const data = await res.json();
     setStatus(data);
     setLoading(false);
@@ -101,7 +99,7 @@ export default function ApiKeysPage() {
     supabase.auth.getUser().then(({ data }) => {
       if (data.user) {
         setUserId(data.user.id);
-        fetchStatus(data.user.id);
+        fetchStatus();
       }
     });
   }, [fetchStatus]);
@@ -112,7 +110,6 @@ export default function ApiKeysPage() {
     setActionError(null);
     const res = await fetch('/api/user/token/create', {
       method: 'POST',
-      headers: { 'x-user-id': userId },
     });
     const data = await res.json();
     setActionLoading(false);
@@ -122,7 +119,7 @@ export default function ApiKeysPage() {
     }
     setNewToken(data.token);
     setShowCreateModal(false);
-    fetchStatus(userId);
+    fetchStatus();
   };
 
   const handleRegenerate = async () => {
@@ -131,7 +128,6 @@ export default function ApiKeysPage() {
     setActionError(null);
     const res = await fetch('/api/user/token/regenerate', {
       method: 'POST',
-      headers: { 'x-user-id': userId },
     });
     const data = await res.json();
     setActionLoading(false);
@@ -141,7 +137,7 @@ export default function ApiKeysPage() {
       return;
     }
     setNewToken(data.token);
-    fetchStatus(userId);
+    fetchStatus();
   };
 
   const handleCopy = async (text: string) => {

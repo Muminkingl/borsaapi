@@ -6,8 +6,14 @@ import { cookies } from 'next/headers'
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
-  // if "next" is in param, use it as the redirect URL
-  const next = searchParams.get('next') ?? '/dashboard'
+  // Sanitize redirect target to prevent open redirect vulnerabilities
+  const rawNext = searchParams.get('next') ?? '/dashboard'
+  const isSafeNext =
+    typeof rawNext === 'string' &&
+    rawNext.startsWith('/') &&
+    !rawNext.startsWith('//') &&
+    !rawNext.includes('\\')
+  const next = isSafeNext ? rawNext : '/dashboard'
 
   if (code) {
     const cookieStore = await cookies()
@@ -35,16 +41,7 @@ export async function GET(request: Request) {
     )
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     if (!error) {
-      const forwardedHost = request.headers.get('x-forwarded-host') // original origin before load balancer
-      const isLocalhost = process.env.NODE_ENV === 'development'
-      if (isLocalhost) {
-        // we can be sure that there is no load balancer in between, so no need to watch for X-Forwarded-Host
-        return NextResponse.redirect(`${origin}${next}`)
-      } else if (forwardedHost) {
-        return NextResponse.redirect(`https://${forwardedHost}${next}`)
-      } else {
-        return NextResponse.redirect(`${origin}${next}`)
-      }
+      return NextResponse.redirect(new URL(next, origin))
     }
   }
 

@@ -1,22 +1,19 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { NextResponse } from 'next/server';
+import { supabase as adminSupabase } from '@/lib/supabase';
+import { createClient } from '@/utils/supabase/server';
 
-// TODO: Replace with real session auth (Google OAuth) in Phase 2
-// For now, accepts X-User-Id header for development testing
-async function getUserId(req: NextRequest): Promise<string | null> {
-  return req.headers.get('x-user-id');
-}
+export async function GET() {
+  const supabase = await createClient();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-export async function GET(req: NextRequest) {
-  const userId = await getUserId(req);
-  if (!userId) {
+  if (authError || !user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await adminSupabase
     .from('api_tokens')
-    .select('id, token, created_at, last_used_at')
-    .eq('user_id', userId)
+    .select('id, token_prefix, created_at, last_used_at')
+    .eq('user_id', user.id)
     .single();
 
   if (error || !data) {
@@ -24,7 +21,7 @@ export async function GET(req: NextRequest) {
   }
 
   return NextResponse.json({
-    token: data.token,
+    prefix: data.token_prefix,
     created_at: data.created_at,
     last_used_at: data.last_used_at,
   });

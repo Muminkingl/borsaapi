@@ -1,19 +1,19 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { NextResponse } from 'next/server';
+import { supabase as adminSupabase } from '@/lib/supabase';
+import { createClient } from '@/utils/supabase/server';
 
-// TODO: Replace with real session auth (Google OAuth) in Phase 2
-async function getUserId(req: NextRequest): Promise<string | null> {
-  return req.headers.get('x-user-id');
-}
+export async function GET() {
+  const supabase = await createClient();
+  const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
 
-export async function GET(req: NextRequest) {
-  const userId = await getUserId(req);
-  if (!userId) {
+  if (authError || !authUser) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const userId = authUser.id;
+
   // Get the user's token_id
-  const { data: tokenRow } = await supabase
+  const { data: tokenRow } = await adminSupabase
     .from('api_tokens')
     .select('id')
     .eq('user_id', userId)
@@ -28,22 +28,22 @@ export async function GET(req: NextRequest) {
 
   const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
 
-  // Count today's requests
-  const { count: todayCount } = await supabase
-    .from('usage_logs')
-    .select('*', { count: 'exact', head: true })
-    .eq('token_id', tokenRow.id)
-    .gte('requested_at', today.toISOString());
-
-  // Count this month's requests
-  const { count: monthCount } = await supabase
-    .from('usage_logs')
-    .select('*', { count: 'exact', head: true })
-    .eq('token_id', tokenRow.id)
-    .gte('requested_at', monthStart.toISOString());
+  // Count today's and this month's requests in parallel
+  const [todayRes, monthRes] = await Promise.all([
+    adminSupabase
+      .from('usage_logs')
+      .select('*', { count: 'exact', head: true })
+      .eq('token_id', tokenRow.id)
+      .gte('requested_at', today.toISOString()),
+    adminSupabase
+      .from('usage_logs')
+      .select('*', { count: 'exact', head: true })
+      .eq('token_id', tokenRow.id)
+      .gte('requested_at', monthStart.toISOString()),
+  ]);
 
   return NextResponse.json({
-    today: todayCount ?? 0,
-    this_month: monthCount ?? 0,
+    today: todayRes.count ?? 0,
+    this_month: monthRes.count ?? 0,
   });
 }

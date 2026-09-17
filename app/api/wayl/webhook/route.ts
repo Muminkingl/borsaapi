@@ -5,48 +5,48 @@
  * Receives payment status updates from Wayl and:
  * - Verifies HMAC signature
  * - Prevents replay attacks (5 min window)
- * - Idempotency (ignores already-processed webhooks)
+ * - Atomic idempotency (prevents race conditions on concurrent webhooks)
  * - On Complete: upgrades user plan to 'supporter'
  * - On Failed/Cancelled: marks transaction as failed
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase';
 import { verifyWebhookSignature } from '@/lib/verify-webhook-signature';
-
-// Use service role client to bypass RLS for webhook updates
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.ANON_SEC!, // service role key
-);
 
 export async function POST(req: NextRequest) {
   try {
+    const secret = process.env.WAYL_WEBHOOK_SECRET;
+    if (!secret) {
+      console.error('[WAYL WEBHOOK] WAYL_WEBHOOK_SECRET is not configured');
+      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
+    }
+
     const body = await req.text();
-    const payload = JSON.parse(body);
+    let payload: any;
+    try {
+      payload = JSON.parse(body);
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    }
 
     const signature = req.headers.get('x-wayl-signature') || '';
 
     // Verify HMAC signature
-    const isValid = verifyWebhookSignature(
-      body,
-      signature,
-      process.env.WAYL_WEBHOOK_SECRET!
-    );
+    const isValid = verifyWebhookSignature(body, signature, secret);
 
     if (!isValid) {
       console.error('[WAYL WEBHOOK] Invalid signature');
-      // Return 200 to prevent Wayl from retrying on auth failures
-      return NextResponse.json({ error: 'Invalid signature' }, { status: 200 });
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
     }
 
-    // Replay attack protection (reject webhooks older than 5 mins)
+    // Replay attack protection (reject webhooks older than 5 mins if timestamp provided)
     const webhookTimestamp = payload.timestamp || payload.createdAt;
     if (webhookTimestamp) {
       const ageMs = Date.now() - new Date(webhookTimestamp).getTime();
       if (ageMs > 5 * 60 * 1000) {
         console.error('[WAYL WEBHOOK] Expired webhook, possible replay attack');
-        return NextResponse.json({ error: 'Webhook expired' }, { status: 200 });
+        return NextResponse.json({ error: 'Webhook expired' }, { status: 400 });
       }
     }
 
@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
 
     if (!referenceId) {
       console.error('[WAYL WEBHOOK] Missing referenceId');
-      return NextResponse.json({ error: 'Missing referenceId' }, { status: 200 });
+      return NextResponse.json({ error: 'Missing referenceId' }, { status: 400 });
     }
 
     // Load the transaction
@@ -66,10 +66,10 @@ export async function POST(req: NextRequest) {
 
     if (txError || !transaction) {
       console.error('[WAYL WEBHOOK] Transaction not found:', referenceId);
-      return NextResponse.json({ error: 'Transaction not found' }, { status: 200 });
+      return NextResponse.json({ error: 'Transaction not found' }, { status: 404 });
     }
 
-    // Idempotency — skip if already processed
+    // Idempotency check — skip if already processed
     if (transaction.webhook_received_at) {
       return NextResponse.json({ status: 'already_processed' }, { status: 200 });
     }
@@ -82,12 +82,36 @@ export async function POST(req: NextRequest) {
           expected: transaction.amount,
           received: webhookAmount,
         });
-        return NextResponse.json({ error: 'Amount mismatch' }, { status: 200 });
+        return NextResponse.json({ error: 'Amount mismatch' }, { status: 400 });
       }
     }
 
+    const now = new Date().toISOString();
+
     // ── Handle payment completion ────────────────────────────────────
     if (status === 'Complete') {
+      // Atomic conditional update to prevent concurrent duplicate processing
+      const { data: updatedTx, error: lockError } = await supabase
+        .from('billing_transactions')
+        .update({
+          status: 'completed',
+          webhook_received_at: now,
+          updated_at: now,
+        })
+        .eq('id', transaction.id)
+        .is('webhook_received_at', null)
+        .select('id')
+        .maybeSingle();
+
+      if (lockError) {
+        console.error('[WAYL WEBHOOK] Error locking transaction:', lockError);
+        throw lockError;
+      }
+
+      if (!updatedTx) {
+        // Another concurrent request already claimed this update
+        return NextResponse.json({ status: 'already_processed' }, { status: 200 });
+      }
 
       // Upgrade user plan in users table
       const { error: updateError } = await supabase
@@ -100,16 +124,6 @@ export async function POST(req: NextRequest) {
         throw updateError;
       }
 
-      // Mark transaction as completed
-      await supabase
-        .from('billing_transactions')
-        .update({
-          status: 'completed',
-          webhook_received_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', transaction.id);
-
       console.log('[WAYL WEBHOOK] Payment completed. User upgraded:', {
         userId: transaction.user_id,
         plan: transaction.plan,
@@ -120,13 +134,12 @@ export async function POST(req: NextRequest) {
 
     // ── Handle failure / cancellation ───────────────────────────────
     } else if (status === 'Failed' || status === 'Cancelled') {
-
       await supabase
         .from('billing_transactions')
         .update({
           status: 'failed',
-          webhook_received_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
+          webhook_received_at: now,
+          updated_at: now,
         })
         .eq('id', transaction.id);
 
@@ -142,6 +155,6 @@ export async function POST(req: NextRequest) {
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
     console.error('[WAYL WEBHOOK ERROR]', message);
-    return NextResponse.json({ error: 'Internal error' }, { status: 200 });
+    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
 }

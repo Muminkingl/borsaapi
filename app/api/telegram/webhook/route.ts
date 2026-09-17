@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { sendTelegramMessage } from '@/lib/telegram';
+import { sendTelegramMessage, escapeHtml } from '@/lib/telegram';
+import crypto from 'crypto';
 
 const ADMIN_CHAT_ID = Number(process.env.TELEGRAM_CHAT_ID!);
 
@@ -8,7 +9,7 @@ const ADMIN_CHAT_ID = Number(process.env.TELEGRAM_CHAT_ID!);
 
 interface TelegramMessage {
   message_id: number;
-  from: { id: number; username?: string };
+  from?: { id: number; username?: string };
   chat: { id: number };
   text?: string;
 }
@@ -34,7 +35,7 @@ async function handleApprove(projectId: string, chatId: number) {
     .single();
 
   if (fetchError || !project) {
-    await reply(chatId, `❌ Project <code>${projectId}</code> not found.`);
+    await reply(chatId, `❌ Project <code>${escapeHtml(projectId)}</code> not found.`);
     return;
   }
 
@@ -49,19 +50,19 @@ async function handleApprove(projectId: string, chatId: number) {
     .eq('id', projectId);
 
   if (error) {
-    await reply(chatId, `❌ Failed to approve — DB error: ${error.message}`);
+    await reply(chatId, `❌ Failed to approve — DB error: ${escapeHtml(error.message)}`);
     return;
   }
 
   await reply(
     chatId,
-    `✅ <b>Approved!</b>\n\n🌐 ${project.name}\n🔗 ${project.url}\n\nUser can now create an API key.`
+    `✅ <b>Approved!</b>\n\n🌐 ${escapeHtml(project.name)}\n🔗 ${escapeHtml(project.url)}\n\nUser can now create an API key.`
   );
 }
 
 async function handleReject(projectId: string, reason: string, chatId: number) {
   if (!reason.trim()) {
-    await reply(chatId, `❌ Rejection reason is empty.\n\nUsage: /reject_${projectId} your reason here`);
+    await reply(chatId, `❌ Rejection reason is empty.\n\nUsage: /reject_${escapeHtml(projectId)} your reason here`);
     return;
   }
 
@@ -72,7 +73,7 @@ async function handleReject(projectId: string, reason: string, chatId: number) {
     .single();
 
   if (fetchError || !project) {
-    await reply(chatId, `❌ Project <code>${projectId}</code> not found.`);
+    await reply(chatId, `❌ Project <code>${escapeHtml(projectId)}</code> not found.`);
     return;
   }
 
@@ -87,13 +88,13 @@ async function handleReject(projectId: string, reason: string, chatId: number) {
     .eq('id', projectId);
 
   if (error) {
-    await reply(chatId, `❌ Failed to reject — DB error: ${error.message}`);
+    await reply(chatId, `❌ Failed to reject — DB error: ${escapeHtml(error.message)}`);
     return;
   }
 
   await reply(
     chatId,
-    `❌ <b>Rejected!</b>\n\n🌐 ${project.name}\n🔗 ${project.url}\n\n📝 Reason sent to user:\n<i>${reason.trim()}</i>`
+    `❌ <b>Rejected!</b>\n\n🌐 ${escapeHtml(project.name)}\n🔗 ${escapeHtml(project.url)}\n\n📝 Reason sent to user:\n<i>${escapeHtml(reason.trim())}</i>`
   );
 }
 
@@ -131,6 +132,20 @@ async function handleStats(chatId: number) {
 // ─── Route Handler ────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
+  // 🔒 SECURITY: Authenticate webhook source via Telegram's secret token header
+  const expectedSecret = process.env.TELEGRAM_WEBHOOK_SECRET;
+  if (expectedSecret) {
+    const receivedSecret = req.headers.get('x-telegram-bot-api-secret-token');
+    if (!receivedSecret) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const bufReceived = Buffer.from(receivedSecret);
+    const bufExpected = Buffer.from(expectedSecret);
+    if (bufReceived.length !== bufExpected.length || !crypto.timingSafeEqual(bufReceived, bufExpected)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+  }
+
   let update: TelegramUpdate;
 
   try {
@@ -142,7 +157,7 @@ export async function POST(req: NextRequest) {
   const message = update.message;
 
   // Always return 200 to Telegram so it doesn't retry
-  if (!message?.text) return NextResponse.json({ ok: true });
+  if (!message?.text || !message.from) return NextResponse.json({ ok: true });
 
   const fromId = message.from.id;
   const chatId = message.chat.id;
